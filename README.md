@@ -23,13 +23,44 @@
 
 ---
 
-## 📐 架构流程图与思维导图 (MCP Generated)
+## ⚡ 极客暗黑架构图表 (Cyberpunk Dark Mode)
 
-### 1. 提示词与语言服务器双轨注入流程图
-![双轨注入流程图](https://mdn.alipayobjects.com/one_clip/afts/img/aMpoSbsBewsAAAAARjAAAAgAoEACAQFr/original)
+### 1. 提示词与语言服务器双轨能量流转图 (Sankey Flow Chart)
+![双轨能量流转图](https://mdn.alipayobjects.com/one_clip/afts/img/G321QoxAusYAAAAAR6AAAAgAoEACAQFr/original)
 
-### 2. 核心功能思维导图
-![核心功能思维导图](https://mdn.alipayobjects.com/one_clip/afts/img/74ZHTqq2KyAAAAAARTAAAAgAoEACAQFr/original)
+### 2. zk-proxy-pro 六维全能能力对比雷达图 (Radar Matrix)
+![六维能力对比雷达图](https://mdn.alipayobjects.com/one_clip/afts/img/_z3sTplN5t4AAAAAT4AAAAgAoEACAQFr/original)
+
+### 3. 高阶 Mermaid 链路流转图
+```mermaid
+graph TD
+    %% 节点样式定义
+    classDef client fill:#1f2937,stroke:#58a6ff,stroke-width:2px,color:#fff;
+    classDef proxy fill:#0d1117,stroke:#bc8cff,stroke-width:3px,color:#fff;
+    classDef engine fill:#161b22,stroke:#3fb950,stroke-width:2px,color:#fff;
+    classDef api fill:#21262d,stroke:#f0883e,stroke-width:2px,color:#fff;
+
+    IDE[Antigravity-1.20.6.exe] ::: client
+    PROXY[zk-proxy-pro 代理中枢] ::: proxy
+    
+    SUB_SP[System Prompt 逆转/注入引擎] ::: engine
+    SUB_LS[Language Server 中文标题注入] ::: engine
+    
+    ANCHOR[TAO_TURN/SUB 记忆双锚点] ::: engine
+    TITLE_ZH[8-18字 简体中文标题生成] ::: engine
+    
+    API_POOL[109 全量模型池 / BYOK] ::: api
+
+    IDE -->|gRPC / HTTP 请求| PROXY
+    PROXY -->|请求拆包 & 重写| SUB_SP
+    PROXY -->|stdio ACP 拦截| SUB_LS
+    
+    SUB_SP -->|双锚点保护| ANCHOR
+    SUB_LS -->|TITLE_ONLY_ZH_SP| TITLE_ZH
+    
+    ANCHOR -->|全量特征发往| API_POOL
+    TITLE_ZH -->|自动更新历史| IDE
+```
 
 ---
 
