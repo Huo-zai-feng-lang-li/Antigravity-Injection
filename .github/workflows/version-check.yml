@@ -1,0 +1,46 @@
+name: Strict Release & Changelog Guard
+
+# 反重力架构硬约束卡点：在 PR/Push 提交时强校验版本号、CHANGELOG 更新与断言测试。
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  guard-check:
+    name: 🛡️ 硬约束拉卡点 (Target Check & Changelog Guard)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 1. 执行离线断言测试
+        run: |
+          node tools/checks/antigravity-target-check.js
+
+      - name: 2. 强校验 Changelog 与 Version 对应关系
+        run: |
+          set -e
+          # 提取 package.json 中版本号是否发生变化
+          VERSION_DIFF=$(git diff HEAD~1 HEAD -- plugins/zk-proxy-pro/package.json | grep '"+  \"version\"' || true)
+          CHANGELOG_DIFF=$(git diff HEAD~1 HEAD -- plugins/zk-proxy-pro/CHANGELOG.md || true)
+          
+          if [ -n "$VERSION_DIFF" ] && [ -z "$CHANGELOG_DIFF" ]; then
+            echo "--------------------------------------------------------"
+            echo "❌ [ERROR] 拦截到违反强约束的提交："
+            echo "检测到 plugins/zk-proxy-pro/package.json 版本号已变更，"
+            echo "但 plugins/zk-proxy-pro/CHANGELOG.md 未做同步更新！"
+            echo "请更新 CHANGELOG.md 补充更新说明后重新提交。"
+            echo "--------------------------------------------------------"
+            exit 1
+          fi
+          echo "✅ [SUCCESS] 版本号与 CHANGELOG 强约束校验通过！"
