@@ -4213,7 +4213,7 @@ function activate(ctx) {
       ),
     );
 
-    // ★ 状态栏入口 (右下角) · 仿 rt-flow · 点击开三模块中央面板
+    // ★ 状态栏入口 (右下角) · 点击开中央面板
     // 五十二章「既得其母 以知其子」· 解「面板无处可开」之疾
     _statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
