@@ -54,7 +54,7 @@ out.push("");
 out.push("```bash");
 out.push(`# 下载 ${vsixName} 后`);
 out.push(`code --install-extension ${vsixName} --force`);
-out.push(`# 或在 VS Code / Windsurf 中：Extensions: Install from VSIX...`);
+out.push(`# 或在 Antigravity-1.20.6.exe 命令面板中：Extensions: Install from VSIX...`);
 out.push("```");
 out.push("");
 out.push(`**下载**：[\`${vsixName}\`](${assetUrl}) · **扩展 id**：\`${m.extId}\``);

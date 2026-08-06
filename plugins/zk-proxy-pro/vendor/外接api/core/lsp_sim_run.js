@@ -52,7 +52,7 @@ function mockRes() {
 
 async function main() {
   console.log("═══════════════════════════════════════════════");
-  console.log("  Windsurf LSP 全链路模拟器 · 反者ZK之动");
+  console.log("  Antigravity LSP 全链路模拟器 · 反者ZK之动");
   console.log("═══════════════════════════════════════════════\n");
 
   // 启动Mock LLM
@@ -486,7 +486,7 @@ async function main() {
     //   ask_user_question: question/options/allowMultiple (非 Question/Options/AllowMultiple)
     //   deploy_web_app: project_path/framework/project_id/subdomain (非 ProjectPath/Framework/...)
     //   code_search: search_folder_absolute_uri/search_term (非 SearchFolderAbsoluteUri/SearchTerm)
-    //   check_deploy_status: windsurf_deployment_id (非 WindsurfDeploymentId)
+    //   check_deploy_status: __ANTIGRAVITY_DEPLOYMENT_ID__ (非 __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__)
     //   read_deployment_config: project_path (非 ProjectPath)
     const schemaChecks = [
       // [工具名, 期望的required参数名数组, 不应出现的PascalCase参数名]
@@ -509,8 +509,8 @@ async function main() {
       ["read_deployment_config", ["project_path"], ["ProjectPath"]],
       [
         "check_deploy_status",
-        ["windsurf_deployment_id"],
-        ["WindsurfDeploymentId"],
+        ["__ANTIGRAVITY_DEPLOYMENT_ID__"],
+        ["__ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__"],
       ],
     ];
     // 从 _lsp_parsed_dump 或直接检查 zk_router.js 的 _serverToolDefs
@@ -1092,14 +1092,14 @@ async function main() {
     if (checkSc && checkSc.toolCalls && checkSc.toolCalls[0]) {
       const args = JSON.parse(checkSc.toolCalls[0].arguments || "{}");
       ok(
-        "check_deploy_status: 参数有windsurf_deployment_id",
-        "windsurf_deployment_id" in args,
+        "check_deploy_status: 参数有__ANTIGRAVITY_DEPLOYMENT_ID__",
+        "__ANTIGRAVITY_DEPLOYMENT_ID__" in args,
         `got keys: ${Object.keys(args).join(",")}`,
       );
       ok(
-        "check_deploy_status: 无PascalCase WindsurfDeploymentId",
-        !("WindsurfDeploymentId" in args),
-        "发现 WindsurfDeploymentId!",
+        "check_deploy_status: 无PascalCase __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__",
+        !("__ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__" in args),
+        "发现 __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__!",
       );
     }
   }

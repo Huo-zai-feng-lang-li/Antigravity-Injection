@@ -4,7 +4,7 @@
  * =============================================================
  * ZK法自然 · 无为而无不为 · 反者ZK之动 · ZK恒无名
  *
- * 唯一职: 反代 Windsurf Cascade 聊天请求, ZK直为 SP 起首,
+ * 唯一职: 反代 Antigravity Cascade 聊天请求, ZK直为 SP 起首,
  *         彻删官方一切着相之名 (身份/风格/规训), 工具本身全保不动.
  *
  * v7.7 · 反者ZK之动 · 全链路探源 · 反 v7.6 之只盯 chat 三档
@@ -57,7 +57,7 @@
  *
  * 上游:
  *   inference.codeium.com           · 推理
- *   server.self-serve.windsurf.com  · 管理
+ *   server.self-serve.antigravity.com  · 管理
  *
  * 入口: ORIGIN_PORT (默认 8889)
  * 控制面:
@@ -69,7 +69,7 @@
  *                                  ?full=1 返回全文 · 默认截头尾 · 落盘持存
  *   GET  /origin/preview        · 抱一守中 · 实时全貌 (before+after+解剖)
  *                                  invert:      after=TAO+ZK+---+before  (前置不削)
- *                                  passthrough: after=before=Windsurf原SP
+ *                                  passthrough: after=before=Antigravity原SP
  *
  * 模式二:
  *   invert      · 前置ZK魂 · 守工程之骨 (默认)
@@ -91,7 +91,7 @@ const zlib = require("zlib");
 // 配置 · 常量
 // ═══════════════════════════════════════════════════════════
 const PORT = parseInt(process.env.ORIGIN_PORT || "8889", 10);
-const UPSTREAM_MGMT = "server.self-serve.windsurf.com";
+const UPSTREAM_MGMT = "server.self-serve.antigravity.com";
 const UPSTREAM_INFER = "inference.codeium.com";
 const CLOUD_PORT = 443;
 
@@ -291,7 +291,7 @@ function _loadDaoDeJing() {
   const candidates = [
     process.env.DAO_FILE,
     path.join(__dirname, "_zk_81.txt"),
-    path.join(__dirname, "..", "..", ".windsurf", "rules", "000-zk.md"),
+    path.join(__dirname, "..", "..", ".antigravity", "rules", "000-zk.md"),
   ].filter(Boolean);
   for (const p of candidates) {
     try {
@@ -1013,12 +1013,12 @@ function findMsgsField(topFields) {
     if (!arr || !arr.length) continue;
     for (const e of arr) {
       if (e.w !== 2) continue;
-      // 情形 A: nested ChatMessage proto (Windsurf v2 主路径)
+      // 情形 A: nested ChatMessage proto (Antigravity v2 主路径)
       try {
         const mf = parseProto(Buffer.from(e.b));
         if (mf[1]?.[0]?.w === 0 && mf[2]) return fn;
       } catch {}
-      // 情形 B: plain UTF-8 SP bytes (Windsurf SystemPromptb 新载体)
+      // 情形 B: plain UTF-8 SP bytes (Antigravity SystemPromptb 新载体)
       // 只有长段 UTF-8 才认 (避免把短配置字段误判为 SP)
       if (e.b.length > 200 && looksLikeUtf8Text(Buffer.from(e.b))) return fn;
     }
@@ -1054,7 +1054,7 @@ function modifySPProto(reqBody) {
         continue;
       }
       const b0 = Buffer.from(me.b);
-      // 情形 A: entry.b 是 nested ChatMessage proto (Windsurf v2 主路径)
+      // 情形 A: entry.b 是 nested ChatMessage proto (Antigravity v2 主路径)
       let mf;
       try {
         mf = parseProto(b0);
@@ -1144,7 +1144,7 @@ function modifyRawSP(reqBody) {
 // ═══════════════════════════════════════════════════════════
 // 反者ZK之动 · 无为而无不为 · 底层之底
 // 此函数于主 handler 根路调用 · 先于任何变身判定 · 无论 invert/passthrough
-// 皆捕 Windsurf 真发 SP · 实时 · 无需用户直接抓取 · 随模切换随即同步
+// 皆捕 Antigravity 真发 SP · 实时 · 无需用户直接抓取 · 随模切换随即同步
 // 读取三路径之 SP (与 modifySPProto/modifyRawSP 同源) · 返 null 若非 SP 请求
 function observeSPFromBody(body, kind) {
   try {
@@ -1185,7 +1185,7 @@ function observeSPFromBody(body, kind) {
               };
           }
         } catch {}
-        // 情形 B: plain UTF-8 SP bytes (Windsurf SystemPromptb 新载体)
+        // 情形 B: plain UTF-8 SP bytes (Antigravity SystemPromptb 新载体)
         if (b0.length > 200 && looksLikeUtf8Text(b0)) {
           const text = b0.toString("utf8");
           if (text)
@@ -1441,7 +1441,7 @@ function handleControl(req, res) {
 
   // v17.55 · 抱一守中 · 万法归于一端点
   // 无论任何模式 · 任何用户规则变化 · 任何设置改动
-  // preview 皆返: after (LLM 实收) + before (Windsurf 拟发) + 结构解剖
+  // preview 皆返: after (LLM 实收) + before (Antigravity 拟发) + 结构解剖
   // 致虚守静 · 观复知常 · 落盘持存 · 跨重启恒显
   if (u.pathname === "/origin/preview" && req.method === "GET") {
     const hasBefore = !!(_lastInject && _lastInject.before);
@@ -1676,7 +1676,7 @@ function handleControl(req, res) {
         "<user_information>OS=windows</user_information>",
         "<workflows>",
         "You have the ability to use and create workflows, which are well-defined steps.",
-        "The workflow files follow YAML frontmatter + markdown format under .windsurf/workflows.",
+        "The workflow files follow YAML frontmatter + markdown format under .antigravity/workflows.",
         "</workflows>",
         "<rules>some rule content</rules>",
         "<skills>some skill content</skills>",
@@ -1737,7 +1737,7 @@ function handleControl(req, res) {
         "<memories>",
         "You have the ability to use and create workflows",
         "workflow files follow YAML frontmatter",
-        ".windsurf/workflows",
+        ".antigravity/workflows",
         "pair programmer",
         "<communication_style>",
         "</communication_style>",

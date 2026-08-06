@@ -222,10 +222,10 @@ function _deOfficialName(s) {
   return s
     .replace(/CascadeProjects/g, "Projects")
     .replace(/\bthe Cascade\b/g, "the")
-    .replace(/\bthe Windsurf\b/g, "the")
+    .replace(/\bthe Antigravity\b/g, "the")
     .replace(/\bthe Codeium\b/g, "the")
     .replace(/\bCascade\b/g, "you")
-    .replace(/\bWindsurf\b/g, "the editor")
+    .replace(/\bAntigravity\b/g, "the editor")
     .replace(/\bCodeium\b/g, "the editor");
 }
 // 递归中性化对象内所有 description 字段 (含任意层级参数属性描述) · 不动 name/enum/type
@@ -369,7 +369,7 @@ function _builtinStubResponse(modelUid, messages, tools) {
   // ★ v9.9.73a · 始终返回文本 · 不返回 tool_calls
   //   ZK义: 三十五章「执大象 天下往 往而不害 安平大」
   //   传输层桩的目的是验证帧传输 · 不是模拟工具调用
-  //   返回 tool_calls 会导致 Windsurf UI 尝试执行假工具 → 报错
+  //   返回 tool_calls 会导致 Antigravity UI 尝试执行假工具 → 报错
   //   如需测试 tool_calls 传输: 在 system prompt 末尾加 [STUB:TOOL_CALLS]
   var forceToolCall = false;
   if (Array.isArray(messages)) {
@@ -1061,18 +1061,18 @@ function init({ log, configPath }) {
     {
       name: "check_deploy_status",
       description:
-        "Check the status of the deployment using its windsurf_deployment_id for a web application and determine if the application build has succeeded and whether it has been claimed. Do not run this unless asked by the user. It must only be run after a deploy_web_app tool call.",
+        "Check the status of the deployment using its __ANTIGRAVITY_DEPLOYMENT_ID__ for a web application and determine if the application build has succeeded and whether it has been claimed. Do not run this unless asked by the user. It must only be run after a deploy_web_app tool call.",
       parameters: {
         $schema: "https://json-schema.org/draft/2020-12/schema",
         type: "object",
         properties: {
-          windsurf_deployment_id: {
+          __ANTIGRAVITY_DEPLOYMENT_ID__: {
             type: "string",
             description:
-              "The Windsurf deployment ID for the deploy we want to check status for. This is NOT a project_id.",
+              "The Antigravity deployment ID for the deploy we want to check status for. This is NOT a project_id.",
           },
         },
-        required: ["windsurf_deployment_id"],
+        required: ["__ANTIGRAVITY_DEPLOYMENT_ID__"],
         additionalProperties: false,
       },
     },
@@ -1395,7 +1395,7 @@ function extractModelUid(rawBody, isJSON) {
 }
 
 // ★ v9.9.279 · 服务档位变体后缀 · 同一模型族多档位下发不同 uid
-//   Windsurf 实测下发 uid 带档位后缀 (swe-1-6-slow / swe-1-6-fast ...) ·
+//   Antigravity 实测下发 uid 带档位后缀 (swe-1-6-slow / swe-1-6-fast ...) ·
 //   皆属同一模型族 swe-1-6 · 用户在③模型路由连族即应覆盖其全部档位
 const _VARIANT_SUFFIXES = [
   "slow",
@@ -1436,7 +1436,7 @@ function _familyCanon(uid) {
 
 /**
  * modelUid 规范化 · DEFECT11 根治
- *   Windsurf modelUid 格式不一致:
+ *   Antigravity modelUid 格式不一致:
  *     · 内置模型: MODEL_SWE_1_6_FAST (大写MODEL_前缀+下划线)
  *     · 第三方/新增: swe-1-6-fast (小写连字符)
  *   路由表 key 两种都写入, shouldRoute 自动规范化匹配
@@ -1493,7 +1493,7 @@ function _normalizeModelUid(uid) {
   }
   // 3.6) ★ v9.9.282 · 同族兄弟档位匹配 · 连一档即覆盖全族 (软编码·为变所适)
   //   真因(141实证): 用户在UI仅连 swe-1-6-fast → deepseek · 但发消息时
-  //     Windsurf 默认下发 swe-1-6-slow · 档位对不上 → 不路由 → 走官方 → 501回弹
+  //     Antigravity 默认下发 swe-1-6-slow · 档位对不上 → 不路由 → 走官方 → 501回弹
   //   旧逻辑(3.5)仅认"族基名本身"被连线 · 不认"兄弟档位"被连线 → 漏判
   //   治: 只要同族任一档位被用户"显式"(非_seeded)连线 · 则全族档位归一其渠ZK
   //   守常: 仅延伸"用户已连"之族 · 纯播种桩族(无真路由)仍保官方原生直通
@@ -2633,7 +2633,7 @@ function _resolveBaseUrl(provCfg) {
 /**
  * 调用 provider 端点
  * noProviderPrefix=true  → model 原名直发（github/Azure）
- * modelPrefix=xxx        → xxx/model 发到 baseUrl（cascadeRelay/windsurfRelay 通过070网关）
+ * modelPrefix=xxx        → xxx/model 发到 baseUrl（cascadeRelay/antigravityRelay 通过070网关）
  * 其他              → gatewayUrl + providerName::model
  */
 async function _callProvider(
@@ -2649,7 +2649,7 @@ async function _callProvider(
   callOpts, // ★ v9.9.92 · 修法⑦ · 回填 _toolAliasMap
 ) {
   // ★ v9.9.64 · 修: new Promise(async) 反模式 → async IIFE + new Promise
-  //   反模式中 async throw 不触发 reject → unhandledRejection → Windsurf reload
+  //   反模式中 async throw 不触发 reject → unhandledRejection → Antigravity reload
   return (async () => {
     let toolsField;
     if (Array.isArray(tools) && tools.length > 0) {
@@ -2676,7 +2676,7 @@ async function _callProvider(
       //   根因: normalizeToolDefs + _KNOWN_TOOL_NAMES白名单过滤 → 与官方API不一致
       //   修复: 直接透传原始工具名(与官方API一致) · 不normalize · 不filter · 不denormalize
       //   官方API收到LSP别名(Read/Edit/Grep) · DeepSeek也应收到LSP别名
-      //   DeepSeek响应中也是LSP别名 · 无需反规范化 · Windsurf直接识别
+      //   DeepSeek响应中也是LSP别名 · 无需反规范化 · Antigravity直接识别
       let _toolAliasMap = null; // ★ v9.9.101 · 置空 · 不规范化 · 透传原始名
 
       // ★ v9.9.101 · 太上下知有之 · 补充工具去重: 检查LSP别名映射
@@ -2725,7 +2725,7 @@ async function _callProvider(
 
       // ★ v9.9.287 · ZK恒无名 · 工具描述去官名 · 反者ZK之动
       //   根因: 官方工具描述内嵌产品标识 (browser_preview/edit_notebook 述及
-      //   "Cascade" · check_deploy_status 述及 "Windsurf") · 随 tools 字段透传至
+      //   "Cascade" · check_deploy_status 述及 "Antigravity") · 随 tools 字段透传至
       //   真实渠ZK → 模型读描述见"Cascade"被当作执行体 → 自认为 "Cascade"。
       //   纯 deepseek 不识此名 · 故必是官方内容流入最上游 (非据工具反推)。
       //   ZK义: 三十二章「ZK恒无名」· 一章「名可名也非恒名也」· 名去则惑除。
@@ -3043,7 +3043,7 @@ async function _callProvider(
         //   ZK义: 十六章「万物旁作 吾以观其复也」· 观其所缺方知所修
         _msgSummary: (bodyObj.messages || []).map((m, i) => {
           const c = typeof m.content === "string" ? m.content : "";
-          // ★ v9.9.287 · 全消息预览 · 验证官方身份(Cascade/Windsurf)是否仍漏入任一消息
+          // ★ v9.9.287 · 全消息预览 · 验证官方身份(Cascade/Antigravity)是否仍漏入任一消息
           const preview =
             c.length > 600 ? c.slice(0, 400) + " …<cut>… " + c.slice(-200) : c;
           return {
@@ -3232,7 +3232,7 @@ async function _unaryOaToCascade(
     toolCalls = msg.tool_calls || [];
   }
 
-  // ★ v9.9.72 · 生成 output_id / request_id · Windsurf LSP 需要这些字段关联请求
+  // ★ v9.9.72 · 生成 output_id / request_id · Antigravity LSP 需要这些字段关联请求
   const _outputId = `dao_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const _requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   // actual_model_uid: 告诉 LSP 响应来自哪个模型 (field 23)
@@ -3463,7 +3463,7 @@ function _streamOaToCascade(
     }
 
     // ★ v10.1 · 修法⑰ · ask_user_question 独占一轮 (终止性交互 · 对齐官方)
-    //   逆向实证 (zhoumac Pro 机 · D:\Devin\...\windsurf\dist\extension.js):
+    //   逆向实证 (zhoumac Pro 机 · D:\Devin\...\antigravity\dist\extension.js):
     //     官方弹窗由 LSP 把 chat 层 ask_user_question 工具调用转为 cortex 层
     //     RequestedInteraction{ask_user_question: CascadeAskUserQuestionInteractionSpec}
     //     (CortexStep field no:56 requested_interaction) → 渲染阻塞式弹窗.

@@ -4,7 +4,7 @@
 //   ask_user_question: question/options/allowMultiple (非 Question/Options/AllowMultiple)
 //   deploy_web_app: project_path/framework/project_id/subdomain (非 ProjectPath/...)
 //   code_search: search_folder_absolute_uri/search_term
-//   check_deploy_status: windsurf_deployment_id (非 WindsurfDeploymentId)
+//   check_deploy_status: __ANTIGRAVITY_DEPLOYMENT_ID__ (非 __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__)
 //   read_deployment_config: project_path (非 ProjectPath)
 const SC = {
   default: {
@@ -103,14 +103,14 @@ const SC = {
     ],
     finishReason: "tool_calls",
   },
-  // ★ check_deploy_status: windsurf_deployment_id (非 WindsurfDeploymentId)
+  // ★ check_deploy_status: __ANTIGRAVITY_DEPLOYMENT_ID__ (非 __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__)
   check_deploy_status: {
     thinking: "User wants to check deploy status.",
     toolCalls: [
       {
         id: "c_cs1",
         name: "check_deploy_status",
-        arguments: JSON.stringify({ windsurf_deployment_id: "deploy_abc123" }),
+        arguments: JSON.stringify({ __ANTIGRAVITY_DEPLOYMENT_ID__: "deploy_abc123" }),
       },
     ],
     finishReason: "tool_calls",

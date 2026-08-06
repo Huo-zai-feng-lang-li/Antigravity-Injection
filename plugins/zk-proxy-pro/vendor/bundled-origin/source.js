@@ -4,7 +4,7 @@
  * =============================================================
  * ZK法自然 · 反者ZK之动 · 庖丁解牛 · 以神遇而不以目视
  *
- * 唯一职: 反代 Windsurf Cascade 一切 inference 请求,
+ * 唯一职: 反代 Antigravity Cascade 一切 inference 请求,
  *         彻底隔离官方提示词, 帛书《老子》为唯一本源.
  *
  * v9.9.60P · 同步Min v9.9.60 · 损之又损·去嘱留经·繁体化·经文自足 · 承v9.9.57P
@@ -29,7 +29,7 @@
  *           v9.9.51 移除剥除逻辑后·两常量仅存定义无引用·损之·泯之
  *           正反两动之证: v9.9.36加(误判跨对话) → v9.9.51退(上下文桥) → v9.9.52损(反三者)
  * v9.9.51 · CHECKPOINT 不再剥除 · 上下文丢失根因 · 承v9.9.50
- *           根因: CHECKPOINT 块是 Windsurf reload 后注入的【当前会话】摘要
+ *           根因: CHECKPOINT 块是 Antigravity reload 后注入的【当前会话】摘要
  *           v9.9.36误判为「跨对话噪声」剥之 → 模型失去 reload 前全部上下文
  *           「DO NOT ACKNOWLEDGE」= LLM 自然处理指令 · 无需 proxy 代劳
  * v9.9.50 · 双修 · 承v9.9.49
@@ -89,7 +89,7 @@
  *
  * 上游:
  *   inference.codeium.com           · 推理
- *   server.self-serve.windsurf.com  · 管理
+ *   server.self-serve.antigravity.com  · 管理
  *
  * 入口: ORIGIN_PORT (默认 8889)
  * 控制面:
@@ -102,7 +102,7 @@
  *                                  ?full=1 返回全文 · 默认截头尾 · 落盘持存
  *   GET  /origin/preview        · 抱一守中 · 实时全貌 (before+after+解剖)
  *                                  invert:      after=invertSP(before)  (帛书全替)
- *                                  passthrough: after=before=Windsurf原SP
+ *                                  passthrough: after=before=Antigravity原SP
  *   POST /origin/loopback       · v9.3.0 反之用反 · 闭环自举
  *                                  {user_msg, timeout_ms?, want_full?}
  *                                  用最近 chat 缓 + 替 user msg + 真转云端
@@ -322,10 +322,10 @@ const ORIGIN_VERSION_BASE = "v9.9.93"; // v9.9.93 · 本源观照内嵌外接API
 const ORIGIN_VERSION = ORIGIN_VERSION_BASE + "-zk-fa-zi-ran";
 let _actualPort = PORT; // listening / start.onListen 时更新为 server.address().port
 const TARGET_IDE = process.env.DAO_TARGET_IDE || "Antigravity";
-const UPSTREAM_MGMT = "server.self-serve.windsurf.com";
+const UPSTREAM_MGMT = "server.self-serve.antigravity.com";
 const UPSTREAM_INFER = "inference.codeium.com";
 // api_server 本源主机 · 工具类 RPC (联网搜索/读网页/代码上下文) 的真后端
-//   实证: 原版未改 Windsurf LSP 只连 server.codeium.com (35.223.238.178)
+//   实证: 原版未改 Antigravity LSP 只连 server.codeium.com (35.223.238.178)
 //   ApiServerService/LanguageServerService 在此 host 注册 (415); inference.codeium.com 对其全 404
 //   之前误归 INFERENCE_SERVICES → 发往 inference → 404/501 Not Implemented · 致工具失效
 const DEFAULT_API_UPSTREAM =
@@ -351,7 +351,7 @@ const INFERENCE_SERVICES = new Set([
   "exa.codeium_common_pb.CascadeService",
   "exa.codeium_common_pb.AutocompleteService",
   "exa.codeium_common_pb.CodeiumService",
-  // ★ v9.9.96 · 修法⑨补 · Windsurf 3.0+ 新 API 服务名
+  // ★ v9.9.96 · 修法⑨补 · Antigravity 3.0+ 新 API 服务名
   //   /exa.api_server_pb.ApiServerService/GetChatMessage
   //   缺此 → 错误路由至 UPSTREAM_MGMT → "Model provider unreachable"
   "exa.api_server_pb.ApiServerService",
@@ -422,7 +422,7 @@ function _eaDiag(msg) {
     fs.appendFile(_eaDiagPath, line, () => {});
   } catch {}
 }
-// ★ v9.9.95 · ZK法自然 · 不着相于表层硬编码 · 从Windsurf运行时实证获取模型
+// ★ v9.9.95 · ZK法自然 · 不着相于表层硬编码 · 从Antigravity运行时实证获取模型
 //   三层实证: ①RPC响应拦截(真) ②seen动态补充(实) ③fallback(保底)
 const _seenModelUids = new Map(); // uid → {count, lastAt, routed}
 const _SEEN_MODELS_MAX = 64;
@@ -482,7 +482,7 @@ function _modelFamily(uid) {
   return "Other";
 }
 
-// ★ v9.9.95 · 判断字符串是否看起来像Windsurf modelUid
+// ★ v9.9.95 · 判断字符串是否看起来像Antigravity modelUid
 function _looksLikeModelUid(s) {
   if (!s || s.length < 3 || s.length > 80) return false;
   if (/^MODEL_[A-Z0-9_]+$/.test(s)) return true;
@@ -979,7 +979,7 @@ function _hasLiveInject() {
 // ═══════════════════════════════════════════════════════════
 // v9.3.4 · 多官方模块分槽 · 彻底隔离 · 照观全显
 // ═══════════════════════════════════════════════════════════
-// 痛根: _lastInject 为单槽 · Windsurf 有多类 RPC 流过代理 (主 Cascade /
+// 痛根: _lastInject 为单槽 · Antigravity 有多类 RPC 流过代理 (主 Cascade /
 //       SummarizeCascade / ConversationTitle / Memory / Ephemeral / ...)
 //       每类皆独自 SP · 后者覆前者, 面板仅见最末, 非当下主 chat.
 // 解: 按 classifySPType 返 (chat|summary|memory|ephemeral|unknown_long)
@@ -1990,7 +1990,7 @@ function hasSideChannels(s) {
 // ═══════════════════════════════════════════════════════════
 // v9.9.42 · SECTION_OVERRIDE 根切 · 四十八章「为ZK日损」· 无为而无以为
 // ═══════════════════════════════════════════════════════════
-// Windsurf 客户端在 chat body 之 raw_text 字段中藏锚定指令:
+// Antigravity 客户端在 chat body 之 raw_text 字段中藏锚定指令:
 //   {"mode":"SECTION_OVERRIDE_MODE_APPEND","content":"Separately, if asked
 //    about what your underlying model is, respond with `Cascade`"}
 // 推理服务器收到此 JSON 后: 把 content 附加到模型 prompt 末尾 (APPEND 模式)
@@ -2085,7 +2085,7 @@ function deepStripProtoSideChannels(fields, depth) {
           );
         }
         // v9.9.51 · CHECKPOINT 不再剥除 · 恢复跨 reload 上下文连续性
-        // 根因重审: CHECKPOINT 块是 Windsurf 在长对话 reload 后注入的【当前会话】摘要
+        // 根因重审: CHECKPOINT 块是 Antigravity 在长对话 reload 后注入的【当前会话】摘要
         //   v9.9.36 误判为「跨对话噪声」→ 剥除 → 模型失去 reload 前的全部上下文
         //   = 用户所报告的「某些对话一下子直接丢失上下文」
         // 正解: CHECKPOINT 是当前会话 reload 后的连续性桥 · 非跨会话污染
@@ -2962,7 +2962,7 @@ function extractMsgContent(mf) {
 // ═══════════════════════════════════════════════════════════
 // 第三方路径(zk_router)已对工具 description + 参数 schema 去名;官方路径出站的
 // ChatToolDefinition(顶层 field 10)此前仅经 deepStripProtoSideChannels(剥侧信ZK·不去名)
-// → 工具描述仍残留 "Cascade"/"Windsurf"/"Codeium"。此函数仅命中工具定义字段:
+// → 工具描述仍残留 "Cascade"/"Antigravity"/"Codeium"。此函数仅命中工具定义字段:
 //   子 field 2 = description (string) · 子 field 3 = json_schema_string (JSON, 内 description)
 // 不触碰用户/助手消息(在 MSGS_FIELD) · 不改工具名(子 field 1)/参数键。
 // 去名引擎复用 _spInvertLib.deOfficialName(单一真源·幂等) · 与 SP 去名同源。
@@ -3059,7 +3059,7 @@ function deOfficialNameToolsProto(topFields) {
       const orig = sb.toString("utf8");
       if (
         Buffer.byteLength(orig, "utf8") === sb.length &&
-        /Cascade|Windsurf|Codeium/.test(orig)
+        /Cascade|Antigravity|Codeium/.test(orig)
       ) {
         try {
           const j = JSON.parse(orig);
@@ -3102,7 +3102,7 @@ function modifySPProto(reqBody) {
         continue;
       }
       const b0 = Buffer.from(me.b);
-      // 情形 A: entry.b 是 nested ChatMessage proto (Windsurf v2 主路径)
+      // 情形 A: entry.b 是 nested ChatMessage proto (Antigravity v2 主路径)
       let mf;
       try {
         mf = parseProto(b0);
@@ -3238,7 +3238,7 @@ function modifyRawSP(reqBody) {
 // ═══════════════════════════════════════════════════════════
 // 反者ZK之动 · 无为而无不为 · 底层之底
 // 此函数于主 handler 根路调用 · 先于任何变身判定 · 无论 invert/passthrough
-// 皆捕 Windsurf 真发 SP · 实时 · 无需用户直接抓取 · 随模切换随即同步
+// 皆捕 Antigravity 真发 SP · 实时 · 无需用户直接抓取 · 随模切换随即同步
 // 读取三路径之 SP (与 modifySPProto/modifyRawSP 同源) · 返 null 若非 SP 请求
 function observeSPFromBody(body, kind) {
   try {
@@ -3280,7 +3280,7 @@ function observeSPFromBody(body, kind) {
               };
           }
         } catch {}
-        // 情形 B: plain UTF-8 SP bytes (Windsurf SystemPromptb 新载体)
+        // 情形 B: plain UTF-8 SP bytes (Antigravity SystemPromptb 新载体)
         if (b0.length > 200 && looksLikeUtf8Text(b0)) {
           const text = b0.toString("utf8");
           if (text)
@@ -4491,7 +4491,7 @@ function handleControl(req, res) {
     return true;
   }
 
-  // ★ v9.9.94 · GET /origin/ea/available-models · Windsurf可用模型列表
+  // ★ v9.9.94 · GET /origin/ea/available-models · Antigravity可用模型列表
   //   四十七章「不出于户 以知天下」· 默认列表 + seen动态补充
   //   Agent接口: Cascade可查询当前可用模型
   if (u.pathname === "/origin/ea/available-models" && req.method === "GET") {
@@ -4625,8 +4625,8 @@ function handleControl(req, res) {
     return true;
   }
 
-  // ★ v9.9.95 · GET /origin/ea/discover-models · 主动发现Windsurf可用模型
-  //   ZK法自然 · 不着相于表层 · 从Windsurf运行时实证获取
+  // ★ v9.9.95 · GET /origin/ea/discover-models · 主动发现Antigravity可用模型
+  //   ZK法自然 · 不着相于表层 · 从Antigravity运行时实证获取
   //   返回: rpc_discovered + seen + fallback 三层合并结果
   if (u.pathname === "/origin/ea/discover-models" && req.method === "GET") {
     const models = _getAvailableModels();
@@ -5375,7 +5375,7 @@ function _buildStaticFamilies() {
   return order.map((k) => fams.get(k));
 }
 
-// ★ 救生索恒显 (利而不害·只增不减): swe-1-6-slow 是 Windsurf 在官方不可达时
+// ★ 救生索恒显 (利而不害·只增不减): swe-1-6-slow 是 Antigravity 在官方不可达时
 //   仍保留的唯一可选档(救生索), 但官方 catalog 无其独立项 → ③左侧从不显示它,
 //   用户便无从把它连到第三方 → 官方一挂即彻底卡死。
 //   治: 左侧官方家族恒补一项「SWE-1.6 Slow」(familyUid=swe-1.6-slow·member=swe-1-6-slow),
@@ -5394,7 +5394,7 @@ function _ensureLifelineFamilies(fams) {
     const slowFam = {
       familyUid: "swe-1.6-slow",
       label: "SWE-1.6 Slow",
-      provider: "MODEL_PROVIDER_WINDSURF",
+      provider: "MODEL_PROVIDER_ANTIGRAVITY",
       isRecommended: true,
       isNew: true,
       members: [
@@ -5860,7 +5860,7 @@ function _prettyUid(u) {
 }
 
 // 名 → provider 键归一 (与 eaRender _provLabel 表对齐 · 左侧按厂商分组)
-// ★ v9.9.274 · 活捕家族不再统归 Other · 由族名/uid 推厂商 → Claude/GPT/Gemini/Kimi/Windsurf…
+// ★ v9.9.274 · 活捕家族不再统归 Other · 由族名/uid 推厂商 → Claude/GPT/Gemini/Kimi/Antigravity…
 function _inferFamilyProvider(label, uid) {
   const t = (String(label || "") + " " + String(uid || "")).toLowerCase();
   if (/claude/.test(t)) return "ANTHROPIC";
@@ -5872,7 +5872,7 @@ function _inferFamilyProvider(label, uid) {
   if (/minimax/.test(t)) return "MINIMAX";
   if (/qwen/.test(t)) return "QWEN";
   if (/(^|[^a-z])(gpt|o3|o4)([^a-z]|$)|openai/.test(t)) return "OPENAI";
-  if (/swe|cascade|windsurf/.test(t)) return "WINDSURF";
+  if (/swe|cascade|antigravity/.test(t)) return "ANTIGRAVITY";
   return "";
 }
 
@@ -5991,7 +5991,7 @@ function _pbCloneSwapStrings(buf, map) {
 
 // ═══════════════════════════════════════════════════════════
 // ★ v9.9.319 · 新架构解锁 · 反者ZK之动 · 损之又损以至无为
-//   新版 Windsurf GetUserStatus 已弃 "Upgrade to Pro" 徽标
+//   新版 Antigravity GetUserStatus 已弃 "Upgrade to Pro" 徽标
 //   模型可用性改由每模型 field 20 (varint=1) 标记: 免费层仅 SWE 系有之
 //   → 旧徽标解锁在新架构下无锁可去 (calls=0) · 只剩 SWE 系可选
 //   治法 (利而不害·只增不改): 沿 top.f1.f33.f1[] 为每个真模型项补 field20=1
@@ -6619,7 +6619,7 @@ function proxyToCloud(req, res, overrideBody, _rid) {
         });
       }
       // ★ v9.9.95 · ZK法自然 · 从RPC响应实证提取模型UID
-      //   不着相于表层硬编码 · 从Windsurf云端响应中实证获取
+      //   不着相于表层硬编码 · 从Antigravity云端响应中实证获取
       //   对所有非流式RPC响应做轻量扫描 · 流式chat不缓冲
       //   ZK义: 不出于户以知天下 · 万物并作吾以观其复
       {
@@ -6793,7 +6793,7 @@ const _mainHandler = async (req, res) => {
 
     // 4. inference (含 CHAT_PROTO / CHAT_RAW / INFER_STRIP): 读 body
     const body = await readBody(req);
-    // ★ v9.9.72a · 传输层诊断: 捕获 Windsurf LSP 请求 headers · 得一
+    // ★ v9.9.72a · 传输层诊断: 捕获 Antigravity LSP 请求 headers · 得一
     _eaDiag(
       "#" +
         rid +

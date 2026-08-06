@@ -224,11 +224,11 @@ const T = [
     function: {
       name: "check_deploy_status",
       description: "Deploy status",
-      // ★ 参数名对齐官方 protobuf schema: windsurf_deployment_id (非 WindsurfDeploymentId)
+      // ★ 参数名对齐官方 protobuf schema: __ANTIGRAVITY_DEPLOYMENT_ID__ (非 __ANTIGRAVITY_DEPLOYMENT_ID_PASCAL__)
       parameters: {
         type: "object",
-        properties: { windsurf_deployment_id: { type: "string" } },
-        required: ["windsurf_deployment_id"],
+        properties: { __ANTIGRAVITY_DEPLOYMENT_ID__: { type: "string" } },
+        required: ["__ANTIGRAVITY_DEPLOYMENT_ID__"],
       },
     },
   },

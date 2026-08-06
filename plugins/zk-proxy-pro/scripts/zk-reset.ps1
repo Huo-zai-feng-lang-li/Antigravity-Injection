@@ -9,14 +9,14 @@
     ④ 解信任区自签 MITM 证书 (server/inference.codeium.com · localhost · 127.0.0.1)
     ⑤ 清除 CODEIUM_LANGUAGE_SERVER_BIN / VSCODE_DEV 持久化用户环变
     ⑥ 删除 ~/.codeium/_dao_csrf_token.txt
-    ⑦ 还原 IDE 内置 windsurf 扩展被就地打补丁的死端口 (dist\extension.js · api/inference → 官方云端)
+    ⑦ 还原 IDE 内置 antigravity 扩展被就地打补丁的死端口 (dist\extension.js · api/inference → 官方云端)
   保留不动: ~/.codeium/zk-byok (主公 key) · ~/.codeium/zk (Cascade 记忆/上下文).
   归零后请 Reload Window / 重启 IDE, 官方语言服务器将自连.
 .PARAMETER DryRun
   只报告将做什么, 不实际改动.
 .PARAMETER IdeRoot
   额外指定 IDE 安装根目录 (含 resources\app), 用于 IDE 未运行时定位内置扩展.
-  例: -IdeRoot 'D:\Devin','E:\Windsurf'
+  例: -IdeRoot 'D:\Devin','E:\Antigravity'
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File zk-reset.ps1
   powershell -ExecutionPolicy Bypass -File zk-reset.ps1 -DryRun
@@ -44,7 +44,7 @@ $KEYS = @(
 
 Write-Host "[1/7] settings.json 锚点/LS 重定向清除"
 $settingsPaths = @()
-foreach ($ide in @('devin','Windsurf','Code','VSCodium')) {
+foreach ($ide in @('devin','Antigravity','Code','VSCodium')) {
   $p = Join-Path $env:APPDATA "$ide\User\settings.json"
   if (Test-Path $p) { $settingsPaths += $p }
 }
@@ -121,7 +121,7 @@ if (Test-Path $csrf) {
   Did "删除 _dao_csrf_token.txt"
 } else { Step "_dao_csrf_token.txt 不存在" }
 
-Write-Host "[7/7] IDE 内置 windsurf 扩展补丁还原 (dist\extension.js · api/inference → 官方云端)"
+Write-Host "[7/7] IDE 内置 antigravity 扩展补丁还原 (dist\extension.js · api/inference → 官方云端)"
 # 本源: zk 把死本地端口硬编码进 IDE 自带的 dist\extension.js · 卸载扩展根本不碰此文件
 #   → 重启后官方 LS 仍被 --api_server_url http://127.0.0.1:<port> 指向死端口 → 「Unable to connect」
 # 还原 3 处注入签名 (端口任意 \d+):
@@ -131,16 +131,16 @@ Write-Host "[7/7] IDE 内置 windsurf 扩展补丁还原 (dist\extension.js · a
 $bundles = New-Object 'System.Collections.Generic.HashSet[string]'
 function Add-Bundle($dir) {
   if (-not $dir) { return }
-  $p = Join-Path $dir 'resources\app\extensions\windsurf\dist\extension.js'
+  $p = Join-Path $dir 'resources\app\extensions\antigravity\dist\extension.js'
   if (Test-Path $p) { [void]$bundles.Add((Resolve-Path $p).Path) }
 }
 # 来源① 运行中的 IDE / language_server 进程
 Get-Process -EA SilentlyContinue | ForEach-Object {
   $pth = $_.Path; if (-not $pth) { return }
-  if ($pth -match '\\resources\\app\\extensions\\windsurf\\bin\\') {
+  if ($pth -match '\\resources\\app\\extensions\\antigravity\\bin\\') {
     $f = Join-Path (Split-Path (Split-Path $pth)) 'dist\extension.js'
     if (Test-Path $f) { [void]$bundles.Add((Resolve-Path $f).Path) }
-  } elseif ($_.ProcessName -match '^(devin|windsurf|code|vscodium|cursor|trae|kiro|antigravity)$') {
+  } elseif ($_.ProcessName -match '^(devin|antigravity|code|vscodium|cursor|trae|kiro|antigravity)$') {
     Add-Bundle (Split-Path $pth)
   }
 }
@@ -152,7 +152,7 @@ Get-Process -EA SilentlyContinue | ForEach-Object {
 if ($IdeRoot) { foreach ($r in $IdeRoot) { Add-Bundle $r } }
 
 if ($bundles.Count -eq 0) {
-  Step '未发现 IDE 内置 windsurf 扩展 (IDE 未运行? 可用 -IdeRoot 指定安装目录)'
+  Step '未发现 IDE 内置 antigravity 扩展 (IDE 未运行? 可用 -IdeRoot 指定安装目录)'
 } else {
   $reApi  = 'restart\(A\)\{A="http://127\.0\.0\.1:\d+",this\.apiServerUrl=A'
   $reCtx  = 'getApiServerUrlFromContext=A=>\{return"http://127\.0\.0\.1:\d+"\}'

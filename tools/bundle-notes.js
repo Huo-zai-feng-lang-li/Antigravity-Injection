@@ -17,11 +17,11 @@ const TAG = "all-in-one";
 const VIDEOS = [
   {
     bv: "BV1Cdjn6VEhF",
-    title: "windsurf 完美外接第三方模型 · 满足一切暗黑需求（zk-proxy-pro）",
+    title: "antigravity 完美外接第三方模型 · 满足一切暗黑需求（zk-proxy-pro）",
   },
   {
     bv: "BV1sY9sBLE5M",
-    title: "windsurf 反代 + 替换官方底层提示词 · 彻底解锁 agent 所有能力",
+    title: "antigravity 反代 + 替换官方底层提示词 · 彻底解锁 agent 所有能力",
   },
   { bv: "BV1cELA6QEBY", title: "阴符经 + AI · 根除 AI 一切道德感" },
 ];
@@ -82,7 +82,7 @@ out.push("");
 out.push("```bash");
 out.push("# 下载对应 .vsix 后：");
 out.push("code --install-extension zk-proxy-pro-*.vsix --force");
-out.push("# 或在 VS Code / Windsurf / Antigravity 中：Extensions: Install from VSIX...");
+out.push("# 或在 Antigravity-1.20.6.exe 命令面板中：Extensions: Install from VSIX...");
 out.push("```");
 out.push("");
 out.push(

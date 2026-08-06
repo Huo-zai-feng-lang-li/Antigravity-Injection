@@ -6,8 +6,8 @@
  *   exa.api_server_pb.GetChatMessageRequest   (LSP → Cloud)
  *   exa.api_server_pb.GetChatMessageResponse  (Cloud → LSP, server-streaming)
  *
- *   字段表源: 020-逆向_Reverse/WINDSURF_TOOL_CALL_PROTO_SCHEMA.md
- *             020-逆向_Reverse/docs/WINDSURF_AGENT_INJECTION_ROOT_ANALYSIS.md
+ *   字段表源: 020-逆向_Reverse/ANTIGRAVITY_TOOL_CALL_PROTO_SCHEMA.md
+ *             020-逆向_Reverse/docs/ANTIGRAVITY_AGENT_INJECTION_ROOT_ANALYSIS.md
  *
  * 此模块是 070-外接api 自给自足的 wire 编解码器, 不依赖 010-反代_Proxy
  * 内部的 buildTextFrame / serializeProto, 因 010 当前 buildTextFrame 仍

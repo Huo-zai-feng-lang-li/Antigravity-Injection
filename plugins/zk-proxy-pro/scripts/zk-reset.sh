@@ -6,7 +6,7 @@
 #     ③ 删除 ~/.codeium/zk-certs/
 #     ④ 解信任区自签 MITM 证书 (login keychain · macOS)
 #     ⑤ 删除 ~/.codeium/_dao_csrf_token.txt
-#     ⑥ 还原 IDE 内置 windsurf 扩展被就地打补丁的死端口 (dist/extension.js · api/inference → 官方云端)
+#     ⑥ 还原 IDE 内置 antigravity 扩展被就地打补丁的死端口 (dist/extension.js · api/inference → 官方云端)
 #   保留不动: ~/.codeium/zk-byok (主公 key) · ~/.codeium/zk (Cascade 记忆).
 #   归零后请 Reload Window / 重启 IDE, 官方语言服务器将自连.
 # 用法:  bash zk-reset.sh          实际归零
@@ -36,7 +36,7 @@ case "$(uname -s)" in
 esac
 
 echo "[1/6] settings.json 锚点/LS 重定向清除"
-for ide in devin Windsurf Code VSCodium; do
+for ide in devin Antigravity Code VSCodium; do
   SP="$CFG/$ide/User/settings.json"
   [ -f "$SP" ] || continue
   TMP="$(mktemp)"
@@ -109,7 +109,7 @@ else
   step "_dao_csrf_token.txt 不存在"
 fi
 
-echo "[6/6] IDE 内置 windsurf 扩展补丁还原 (dist/extension.js · api/inference → 官方云端)"
+echo "[6/6] IDE 内置 antigravity 扩展补丁还原 (dist/extension.js · api/inference → 官方云端)"
 # 本源: zk 把死本地端口硬编码进 IDE 自带的 dist/extension.js · 卸载扩展不碰此文件 → 重启后仍连死端口
 SIG='restart\(A\)\{A="http://127\.0\.0\.1:[0-9]+"|getApiServerUrlFromContext=A=>\{return"http://127\.0\.0\.1:[0-9]+"\}|const i="http://127\.0\.0\.1:[0-9]+"'
 revert_bundle() {
@@ -126,11 +126,11 @@ revert_bundle() {
   fi
 }
 BUNDLES=""
-add_bundle() { local p="$1/resources/app/extensions/windsurf/dist/extension.js"; [ -f "$p" ] && BUNDLES="$BUNDLES\n$p"; }
+add_bundle() { local p="$1/resources/app/extensions/antigravity/dist/extension.js"; [ -f "$p" ] && BUNDLES="$BUNDLES\n$p"; }
 case "$(uname -s)" in
   Darwin)
     for app in /Applications/*.app "$HOME/Applications/"*.app; do
-      p="$app/Contents/Resources/app/extensions/windsurf/dist/extension.js"
+      p="$app/Contents/Resources/app/extensions/antigravity/dist/extension.js"
       [ -f "$p" ] && BUNDLES="$BUNDLES\n$p"
     done ;;
   *)
@@ -143,7 +143,7 @@ for f in $(printf '%b' "$BUNDLES" | sort -u); do
   FOUND=1
   revert_bundle "$f"
 done
-[ "$FOUND" = "0" ] && step '未发现 IDE 内置 windsurf 扩展 (可用 DAO_IDE_ROOT=... 指定安装根)'
+[ "$FOUND" = "0" ] && step '未发现 IDE 内置 antigravity 扩展 (可用 DAO_IDE_ROOT=... 指定安装根)'
 
 echo ""
 echo "保留不动: ~/.codeium/zk-byok (主公 key) · ~/.codeium/zk (Cascade 记忆)"

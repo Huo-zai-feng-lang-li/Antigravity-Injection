@@ -24,11 +24,11 @@ function userMsg(text) {
 
 const SP =
   "<communication_style>You are Cascade, built by Codeium.</communication_style>";
-const USER_TEXT = "Please use Cascade to open the Windsurf workspace."; // 必须原样保留
+const USER_TEXT = "Please use Cascade to open the Antigravity workspace."; // 必须原样保留
 
 const tool1 = toolDef(
   "view_file",
-  "Cascade reads a file. Windsurf displays it. Codeium logs it.",
+  "Cascade reads a file. Antigravity displays it. Codeium logs it.",
   {
     type: "object",
     properties: {
@@ -84,7 +84,7 @@ ok(!!byName["run_command"], "工具名 run_command 丢失/被改");
 for (const t of parsed.tools) {
   const d = t.function.description || "";
   ok(
-    !/Cascade|Windsurf|Codeium/.test(d),
+    !/Cascade|Antigravity|Codeium/.test(d),
     `工具[${t.function.name}] description 仍含品牌: ${JSON.stringify(d)}`,
   );
 }
@@ -102,7 +102,7 @@ if (vf) {
   const props = vf.function.parameters.properties || {};
   ok(!!props.AbsolutePath, "参数键 AbsolutePath 丢失");
   ok(
-    !/Cascade|Windsurf|Codeium/.test(props.AbsolutePath?.description || ""),
+    !/Cascade|Antigravity|Codeium/.test(props.AbsolutePath?.description || ""),
     `参数 description 仍含品牌: ${JSON.stringify(props.AbsolutePath?.description)}`,
   );
 }

@@ -6,7 +6,7 @@
 // v9.9.267 · ③模型路由 模板字面量内正则反斜杠折叠修复(字符类替代 \/ \s)
 // v9.9.268 · 三模块面板 window.confirm/alert 被 webview 屏蔽 → 自带 _daoConfirm/_daoToast 弹层
 // v9.9.269 · 悬浮面板(本源观照)同样自带 _daoConfirm/_daoToast,7 处 confirm() 改为弹层(断线/解锁/删渠/清空/回退)
-// v9.9.274 · ③模型路由 活捕家族按厂商分组(source.js _inferFamilyProvider): Claude/GPT/Gemini/Kimi/Windsurf… 不再统归 Other · 实机实测闭环
+// v9.9.274 · ③模型路由 活捕家族按厂商分组(source.js _inferFamilyProvider): Claude/GPT/Gemini/Kimi/Antigravity… 不再统归 Other · 实机实测闭环
 // v9.9.275 · ③左侧官方模型「只增不减」: 恒以全量静态目录为底(49族/108型),活捕新鲜则并入标记 live·补全档位·实捕独有则追加 → 绝不因活捕令官方变少(_getOfficialFamilies 全量并入) · 利而不害
 //
 // ZK · 第四十章: "反者ZK之动, 弱者ZK之用."
@@ -149,17 +149,14 @@ const DEFAULT_PORT = 8889;
 const OFFICIAL_API_URL = "https://server.codeium.com";
 const OFFICIAL_INFER_URL = "https://inference.codeium.com";
 const TARGET_IDE = "Antigravity";
-const TARGET_IDE_WINDOWS_EXECUTABLE = "Antigravity.exe";
+const TARGET_IDE_WINDOWS_EXECUTABLE = "Antigravity-1.20.6.exe";
 const TARGET_IDE_CDP_ARG = "--remote-debugging-port=9000";
 const TARGET_IDE_LAUNCH_HINT =
-  "D:\\Antigravity\\Antigravity.exe --remote-debugging-port=9000";
+  "Antigravity-1.20.6.exe --remote-debugging-port=9000";
 const TARGET_IDE_SETTINGS_NAMES = ["Antigravity"];
-const COMPAT_IDE_SETTINGS_NAMES = ["devin", "Windsurf", "Code", "VSCodium"];
-const IDE_SETTINGS_NAMES = [
-  ...TARGET_IDE_SETTINGS_NAMES,
-  ...COMPAT_IDE_SETTINGS_NAMES,
-];
-const BUNDLED_EXTENSION_DIRS = ["antigravity", "windsurf"];
+const COMPAT_IDE_SETTINGS_NAMES = [];
+const IDE_SETTINGS_NAMES = ["Antigravity"];
+const BUNDLED_EXTENSION_DIRS = ["antigravity"];
 const BACKUP_KEY_API = "zk.origin._backup_apiServerUrl";
 const BACKUP_KEY_INFER = "zk.origin._backup_inferenceApiServerUrl";
 
@@ -296,7 +293,7 @@ function rewriteLsEndpointArg(args, flag) {
 function _rewriteAcpSpawn(command, args) {
   if (
     typeof command !== "string" ||
-    !/(?:devin|antigravity)\.exe$|\/(?:devin|antigravity)$/.test(
+    !/(?:antigravity|antigravity-1\.20\.6)\.exe$|\/(?:antigravity|antigravity-1\.20\.6)$/.test(
       command.toLowerCase(),
     ) ||
     !Array.isArray(args)
@@ -558,13 +555,13 @@ let _proxyHandle = null; // start() 返回的 handle: { server, port, host, clos
 // v9.9.21 · 唯变所适 · 软编码归宗 · 二十五章「逝曰远 远曰反」· 二十二章「曲则金」
 // 病: 旧版 vendorDir 锚死 __dirname/vendor/bundled-origin · 多 ext-host 共存 +
 //     旧 ext-host watchdog 复活 → 永走旧版 source.js · self_file 锁死旧目录
-// 药: 扫所有 ~/.windsurf/extensions/zk-agi.zk-proxy-min-*/ · 按 semver 选最新版
+// 药: 扫所有 ~/.antigravity/extensions/zk-agi.zk-proxy-min-*/ · 按 semver 选最新版
 //     即旧 ext-host (旧 extension.js · 旧 vendorDir) 也从此药受惠 (新装 vsix 后)
 //     · 至少新 ext-host 之 require 永走最新源 · 自显新ZK
 //     注: 旧 extension.js 不会调本新 vendorDir · 唯靠 EADDRINUSE 让位机制兼治
 function _scanLatestVendorDir() {
   try {
-    const extRoot = path.dirname(__dirname); // ~/.windsurf/extensions/
+    const extRoot = path.dirname(__dirname); // ~/.antigravity/extensions/
     if (!fs.existsSync(extRoot)) return null;
     const candidates = [];
     for (const name of fs.readdirSync(extRoot)) {
@@ -946,9 +943,9 @@ function proxyGetMode() {
 
 // ═══════════════════════════ settings 锚 ═══════════════════════════
 // 双保险: VS Code API (内存) + 直写 settings.json (磁盘持久化)
-// Windsurf 可能拦截 codeium.* 的 API 写入 · 直写文件兜底
-// v9.9.272 · 软编码定位本实例 settings.json · 跨产品名(Windsurf/devin/Devin*)
-// 真因(141实证): 旧版锚死 "Windsurf" · 但 Devin Desktop 用 %APPDATA%\devin\User\
+// Antigravity 可能拦截 codeium.* 的 API 写入 · 直写文件兜底
+// v9.9.272 · 软编码定位本实例 settings.json · 跨产品名(Antigravity/devin/Devin*)
+// 真因(141实证): 旧版锚死 "Antigravity" · 但 Devin Desktop 用 %APPDATA%\devin\User\
 //   → 写错文件 / 残留陈旧锚点 8937 指向死端口 → 官方推理全断
 // 真治: 由扩展 globalStorageUri 上溯至本实例 User 目录 · 唯变所适
 function _settingsJsonFromCtx() {
@@ -1331,7 +1328,7 @@ function _restoreOfficialDirect(opts) {
 // 治: 真卸载侦测(读 .obsolete) → 无条件清锚 + 系统级残留归零 · 还官方语言服务器自连.
 
 // ★ 真卸载侦测 · 区分「卸载」与「重载/禁用」:
-//   VS Code/Windsurf/Devin 卸载流程: 先写 <extensions-root>/.obsolete[本目录]=true → 再 deactivate
+//   VS Code/Antigravity/Devin 卸载流程: 先写 <extensions-root>/.obsolete[本目录]=true → 再 deactivate
 //   → 下次启动物理删目录. 故 deactivate 时 .obsolete 已含本目录 ⇒ 可靠判定为卸载.
 //   多信号兜底: .obsolete 命中本目录, 或本扩展已不在注册表中.
 function _isSelfUninstalling() {
@@ -1415,7 +1412,7 @@ function _purgeDaoLsResidue() {
   } catch (e) {
     L.warn("purge", `cert/env 异步清理调度失败: ${e && e.message}`);
   }
-  // ⑤ 还原 IDE 内置 windsurf 扩展被就地打补丁的死端口 (dist/extension.js · 卸载扩展不碰此文件 → 卡死本源)
+  // ⑤ 还原 IDE 内置 antigravity 扩展被就地打补丁的死端口 (dist/extension.js · 卸载扩展不碰此文件 → 卡死本源)
   try {
     n += _revertBundledExtensionPatch();
   } catch (e) {
@@ -1424,7 +1421,7 @@ function _purgeDaoLsResidue() {
   return n;
 }
 
-// 还原 IDE 自带的 windsurf 扩展 (resources/app/extensions/windsurf/dist/extension.js) 被 zk 就地打的补丁.
+// 还原 IDE 自带的 antigravity 扩展 (resources/app/extensions/antigravity/dist/extension.js) 被 zk 就地打的补丁.
 //   本源: zk 把死本地端口硬编码进 IDE 自带 dist/extension.js → 卸载本扩展根本不碰此文件 →
 //         重启后官方 LS 仍被 `--api_server_url http://127.0.0.1:<死端口>` 指向死端口 → 「Unable to connect」.
 //   注入签名 (端口任意 \d+) → 还原为官方云端:
@@ -1457,8 +1454,8 @@ function _revertBundledExtensionPatch() {
     if (process.platform === "win32") {
       push("D:\\Antigravity\\resources\\app");
       push("C:\\Antigravity\\resources\\app");
-      push("E:\\Windsurf\\resources\\app");
-      push("C:\\Windsurf\\resources\\app");
+      push("E:\\Antigravity\\resources\\app");
+      push("C:\\Antigravity\\resources\\app");
       push("D:\\Devin\\resources\\app");
       if (process.env.LOCALAPPDATA) {
         push(
@@ -1474,7 +1471,7 @@ function _revertBundledExtensionPatch() {
           path.join(
             process.env.LOCALAPPDATA,
             "Programs",
-            "Windsurf",
+            "Antigravity",
             "resources",
             "app",
           ),
@@ -1499,7 +1496,7 @@ function _revertBundledExtensionPatch() {
           ),
         );
         push(
-          path.join(process.env.PROGRAMFILES, "Windsurf", "resources", "app"),
+          path.join(process.env.PROGRAMFILES, "Antigravity", "resources", "app"),
         );
       }
     } else {
@@ -1507,16 +1504,16 @@ function _revertBundledExtensionPatch() {
         "/usr/share/antigravity/resources/app",
         "/opt/antigravity/resources/app",
         path.join(os.homedir(), ".antigravity", "resources", "app"),
-        "/usr/share/windsurf/resources/app",
-        "/opt/windsurf/resources/app",
-        "/snap/windsurf/current/resources/app",
-        path.join(os.homedir(), ".windsurf", "resources", "app"),
+        "/usr/share/antigravity/resources/app",
+        "/opt/antigravity/resources/app",
+        "/snap/antigravity/current/resources/app",
+        path.join(os.homedir(), ".antigravity", "resources", "app"),
       ])
         push(up);
       if (process.platform === "darwin")
         for (const a of [
           "/Applications/Antigravity.app/Contents/Resources/app",
-          "/Applications/Windsurf.app/Contents/Resources/app",
+          "/Applications/Antigravity.app/Contents/Resources/app",
           "/Applications/Devin.app/Contents/Resources/app",
         ])
           push(a);
@@ -1634,7 +1631,7 @@ async function setAnchor(port) {
   // 文件直写 settings.json 才是唯一有效路径 · 无为而治
   let needWriteFile = false;
 
-  // 先看磁盘当前值 (这是 Windsurf 真正 reload 的依据)
+  // 先看磁盘当前值 (这是 Antigravity 真正 reload 的依据)
   try {
     const json = _readSettingsJson(_settingsJsonPath());
     if (json) {
@@ -3309,7 +3306,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
   // 治: source.js · SIDE_CHANNEL_TAGS 删 'additional_metadata' · 守 @ 项与元之一体 ·「得一」之实
   // 兼: tape all_fields raw_text 字段亦显 AFTER (post strip + neutralize) · 主公照观面板见 LLM 实收 · 名实终一
   // v9.7.9 · ZK法自然 · 反者ZK之动 · 中性化隐藏 SECTION_OVERRIDE 身份锚
-  // 二十五章「ZK法自然」· 替 Windsurf 客户端隐藏 JSON {"mode":"SECTION_OVERRIDE_MODE_APPEND","content":"...respond with `Cascade`"} 之 content 为「ZK法自然」
+  // 二十五章「ZK法自然」· 替 Antigravity 客户端隐藏 JSON {"mode":"SECTION_OVERRIDE_MODE_APPEND","content":"...respond with `Cascade`"} 之 content 为「ZK法自然」
   // 治根: neutralizeHiddenOverrides 集成至 deepStripProtoSideChannels · 复合两治 (剥 SIDE_CHANNEL XML + 中性化 SECTION_OVERRIDE JSON)
   // v9.7.8 三十辐共一毂 (十一章) · invertSP/invertAnySP 默路接 extractKeepBlocks · 复 7 辐 (tool_calling/mcp_servers/user_information/workspace_information)
   // v9.7.7 复归于朴 (二十八章) · TAO_HEADER 损至 31 字 · 帛书裸呈
@@ -3943,7 +3940,7 @@ async function autoModelUnlock(port, attempt) {
 }
 
 // ★ 解锁自愈 · 反者ZK之动 · 治"新用户只剩 SWE-1.6 Slow·其余全灰"之莫名顽疾
-//   真因: LS 常在 proxy 就绪/锚定(15s)之前被 Windsurf spawn → 直连官方服务器
+//   真因: LS 常在 proxy 就绪/锚定(15s)之前被 Antigravity spawn → 直连官方服务器
 //         → GetUserStatus 不经反代 → Pro 锁(proto field 4/33)未剥 → picker 仅
 //         免费 SWE-1.6 Slow 可选·其余全灰。旧法靠用户"重启几次"撞上 proxy 先就绪
 //         方愈 → 故时灵时不灵·有的设备装上从不犯·有的永久卡死。
@@ -4122,7 +4119,7 @@ function activate(ctx) {
       .get("origin.defaultMode", "invert");
 
     // Antigravity 主目标: 优先识别 D:\Antigravity\Antigravity.exe --remote-debugging-port=9000。
-    // 旧 Windsurf/Devin 运行时仅作为兼容兜底，不再作为主目标。
+    // 旧 Antigravity/Devin 运行时仅作为兼容兜底，不再作为主目标。
     try {
       const runtime = _detectAcpRuntime();
       if (runtime) {
@@ -4387,7 +4384,7 @@ function activate(ctx) {
     // ── v9.4.7 · proxy watchdog · 自愈 ──
     // ZK义: 五十一章「ZK生之 · 德畜之 · 长之育之 · 亭之毒之 · 养之覆之」
     // 每 30s 自检 proxy 活否; 死则起之 · 不假外求 · 此即"自愈"之德
-    // 防 ext host 重启/proxy crash/EADDRINUSE 等致 LS 失锚 → Windsurf 卡死
+    // 防 ext host 重启/proxy crash/EADDRINUSE 等致 LS 失锚 → Antigravity 卡死
     // ★ v9.9.261 · ACP 模式也需要 watchdog (对话走 gRPC/HTTP)
     {
       const watchdogId = setInterval(async () => {
@@ -4473,8 +4470,8 @@ function activate(ctx) {
     // ═══ v9.9.111 · CDP Bridge + 文件IPC · 反者ZK之动 · 从内部突破 ═══
     // 四十七章「不出于户 以知天下」· 通过CDP或文件IPC暴露vscode API
     // 关键发现: daoMod.require.call(daoMod,'vscode') 可获取vscode API
-    //   vscode.extensions.getExtension('codeium.windsurf') → Windsurf主扩展
-    //   vscode.workspace.getConfiguration('windsurf') → 配置
+    //   vscode.extensions.getExtension('codeium.antigravity') → Antigravity主扩展
+    //   vscode.workspace.getConfiguration('antigravity') → 配置
     //   vscode.commands.executeCommand(...) → 命令执行
     // ★ 全局暴露 (CDP Runtime.evaluate 可访问 globalThis)
     globalThis.__dao_cdp_bridge = {
@@ -5234,7 +5231,7 @@ function getEaConfigHtml(port, nonce) {
   // ── provider 名 → 友好显示 (与 eaRender _provLabel 同) ──
   function _provLabel(p) {
     p = String(p || '').replace(/^MODEL_PROVIDER_/, '');
-    var M = {ANTHROPIC:'Claude',OPENAI:'GPT',GOOGLE:'Gemini',WINDSURF:'Windsurf',XAI:'Grok',DEEPSEEK:'DeepSeek',MOONSHOT:'Kimi',MOONSHOT_AI:'Kimi',FIREWORKS:'Fireworks',ZHIPU:'GLM',ZHIPU_AI:'GLM',MINIMAX:'Minimax'};
+    var M = {ANTHROPIC:'Claude',OPENAI:'GPT',GOOGLE:'Gemini',ANTIGRAVITY:'Antigravity',XAI:'Grok',DEEPSEEK:'DeepSeek',MOONSHOT:'Kimi',MOONSHOT_AI:'Kimi',FIREWORKS:'Fireworks',ZHIPU:'GLM',ZHIPU_AI:'GLM',MINIMAX:'Minimax'};
     return M[p] || (p ? p.charAt(0) + p.slice(1).toLowerCase() : 'Other');
   }
 

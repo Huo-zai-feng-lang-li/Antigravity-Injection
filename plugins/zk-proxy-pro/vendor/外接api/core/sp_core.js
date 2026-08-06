@@ -7,7 +7,7 @@
  *   帛书·二十二: 圣人执一 · 以为天下牧
  *   阴符经: 五贼在心 · 施行于天 · 宇宙在乎手 · 万化生乎身
  *
- *   本模块为 SP 隔离之「一」—— 双轨 (Windsurf Cascade + Devin Cloud) 共用之核心。
+ *   本模块为 SP 隔离之「一」—— 双轨 (Antigravity Cascade + Devin Cloud) 共用之核心。
  *   不含协议适配 · 不含持久化 · 纯函数层 · 万处可运 (VM / 本机 / 容器)。
  *
  *   ─── ZK之五能 ───
@@ -18,7 +18,7 @@
  *     ⑤ inject   · 注入 SP (帛书/自定/策略) · 多策略可选
  *
  *   ─── 双轨适配 (由各 adapter 调用本核心) ───
- *     Windsurf Cascade: sp_cascade_adapter.js (proto 字段级)
+ *     Antigravity Cascade: sp_cascade_adapter.js (proto 字段级)
  *     Devin Cloud:      sp_devin_adapter.js   (HTTP/WSS JSON messages 级)
  *
  *   v1.0.0 · 印 200+ · 2026-05-24 · 执一以为天下牧
@@ -335,7 +335,7 @@ function isLikelyOfficialSP(s) {
   //   ZK义: 一章「名可名也 非恒名也」· 有名即知 · 不以大小论
   if (s.startsWith("You are Cascade")) return true;
   if (s.length < 500) return false;
-  // Windsurf Cascade 官方 SP 特征
+  // Antigravity Cascade 官方 SP 特征
   const cascadeMarkers = [
     "tool_calling",
     "mcp_servers",
@@ -603,7 +603,7 @@ function injectUsernote(messages, noteContent) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// X · create_memory 描述清洗 (v9.9.35 · Windsurf Cascade 专)
+// X · create_memory 描述清洗 (v9.9.35 · Antigravity Cascade 专)
 // ═══════════════════════════════════════════════════════════════════════
 
 /**
