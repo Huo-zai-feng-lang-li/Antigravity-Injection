@@ -712,7 +712,6 @@ function assertLiveOfficialPromptPreview(file) {
 
 const extensionFiles = [
   "plugins/dao-proxy-pro/extension.js",
-  "plugins/dao-proxy-min/extension.js",
 ];
 
 for (const file of extensionFiles) {
@@ -760,9 +759,6 @@ for (const file of extensionFiles) {
       "pro config panel never blocks tab switching for manual save": (fn) =>
         !fn.includes("请先保存"),
     });
-  } else {
-    assertIncludes(file, "$editToggle.classList.add('active')", "custom mode tab active state");
-    assertIncludes(file, "setModeUI('invert');", "custom save activates custom mode tab");
   }
   assertFunctionBody(file, "getEssenceHtml", {
     "official tab does not render edit fallback as captured prompt": (fn) =>
@@ -847,7 +843,6 @@ for (const file of extensionFiles) {
 
 for (const file of [
   "plugins/dao-proxy-pro/vendor/bundled-origin/source.js",
-  "plugins/dao-proxy-min/vendor/bundled-origin/source.js",
 ]) {
   assertNoUndeclaredOs(file);
   assertRegex(file, /TARGET_IDE\s*=.*"Antigravity"/, "source target IDE");
@@ -877,15 +872,12 @@ for (const file of [
 
 for (const file of [
   "plugins/dao-proxy-pro/package.json",
-  "plugins/dao-proxy-min/package.json",
 ]) {
   assertIncludes(file, "antigravity", "package keyword");
 }
 
 const proPkg = JSON.parse(read("plugins/dao-proxy-pro/package.json"));
-const minPkg = JSON.parse(read("plugins/dao-proxy-min/package.json"));
 assertPackageVersion("plugins/dao-proxy-pro/package.json", proPkg.version);
-assertPackageVersion("plugins/dao-proxy-min/package.json", minPkg.version);
 
 const proVsix = `dist/dao-proxy-pro-${proPkg.version}.vsix`;
 if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
@@ -898,20 +890,6 @@ if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
     proVsix,
     "extension/vendor/bundled-origin/source.js",
     "plugins/dao-proxy-pro/vendor/bundled-origin/source.js",
-  );
-}
-
-const minVsix = `dist/dao-proxy-min-${minPkg.version}.vsix`;
-if (fs.existsSync(path.join(__dirname, "../..", minVsix))) {
-  assertVsixEntryEqualsSource(
-    minVsix,
-    "extension/extension.js",
-    "plugins/dao-proxy-min/extension.js",
-  );
-  assertVsixEntryEqualsSource(
-    minVsix,
-    "extension/vendor/bundled-origin/source.js",
-    "plugins/dao-proxy-min/vendor/bundled-origin/source.js",
   );
 }
 

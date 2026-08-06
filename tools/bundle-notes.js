@@ -39,10 +39,10 @@ function dl(m) {
 }
 
 const out = [];
-out.push("# Antigravity Injection · 道法自然 — 三插件 + 源代码 合一");
+out.push("# Antigravity Injection · 道法自然 — 插件 + 源代码");
 out.push("");
 out.push(
-  "> **一处看全**：本 Release 聚合 **三个插件的 VSIX + 完整源代码**，单一入口、随主线刷新。无需翻找各模块独立 Release，下载即用、读码即见。",
+  "> **一处看全**：本 Release 包含 **dao-proxy-pro 插件 VSIX + 完整源代码**，单一入口、随主线刷新。下载即用、读码即见。",
 );
 out.push("");
 out.push("## 🎬 视频介绍");
@@ -54,7 +54,7 @@ out.push(
   "🌐 [自动播放主页（进入即播）](https://huo-zai-feng-lang-li.github.io/Antigravity-Injection/) · 👤 [我的 B 站主页](https://space.bilibili.com/2114868619)",
 );
 out.push("");
-out.push("## 📦 三插件（下载即用）");
+out.push("## 📦 插件（下载即用）");
 out.push("");
 out.push("| 插件 | 版本 | 扩展 id | 说明 | 下载 |");
 out.push("|---|---|---|---|---|");
@@ -71,28 +71,22 @@ out.push(
     REPO +
     "/releases/download/" +
     TAG +
-    "/Antigravity-Injection-source.zip)（与本版本一致的快照，含三插件全部源码 + 构建/发版脚本）。",
+    "/Antigravity-Injection-source.zip)（与本版本一致的快照，含插件全部源码 + 构建/发版脚本）。",
 );
 out.push(
-  "- 三插件源码分列于 `plugins/rt-flow`、`plugins/dao-proxy-min`、`plugins/dao-proxy-pro`；构建脚本 `scripts/build-vsix.mjs` 可一键复现全部 VSIX。",
+  "- 插件源码位于 `plugins/dao-proxy-pro`；构建脚本 `scripts/build-vsix.mjs` 可一键复现 VSIX。",
 );
 out.push("");
 out.push("## 🚀 安装");
 out.push("");
 out.push("```bash");
 out.push("# 下载对应 .vsix 后：");
-out.push("code --install-extension rt-flow-*.vsix --force");
-out.push("code --install-extension dao-proxy-min-*.vsix --force");
 out.push("code --install-extension dao-proxy-pro-*.vsix --force");
-out.push("# 或在 VS Code / Windsurf 中：Extensions: Install from VSIX...");
+out.push("# 或在 VS Code / Windsurf / Antigravity 中：Extensions: Install from VSIX...");
 out.push("```");
 out.push("");
 out.push(
-  "三插命令 ID / 视图 ID / 配置键 / 端口 / 备份键全无交集，可同时安装、各自独立运行（min 与 pro 同一时刻建议仅启用其一处于 invert 模式）。",
-);
-out.push("");
-out.push(
-  "> 各插件的逐版本变更见各自独立 Release（tag `<key>-v<version>`）与目录内 `CHANGELOG.md`。",
+  "> 插件的逐版本变更见独立 Release（tag `<key>-v<version>`）与目录内 `CHANGELOG.md`。",
 );
 out.push("");
 out.push(

@@ -22,7 +22,6 @@ const implementations = [
 
 const restImplementations = [
   implementations[0],
-  ["min mirror", path.join(__dirname, "..", "..", "dao-proxy-min", "vendor", "bundled-origin", "source.js")],
 ];
 
 for (const [name, modulePath] of implementations) {
