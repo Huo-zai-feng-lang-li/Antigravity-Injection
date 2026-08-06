@@ -368,7 +368,7 @@ const API_SERVER_SERVICES = new Set([
 ]);
 
 // 三种模式 · 多言数穷 · 不如守中 · v9.9.92 加入 'custom' · 与 sp_invert.js 一致
-const SP_MODE_VALID = new Set(["invert", "passthrough", "custom"]);
+const SP_MODE_VALID = new Set(["passthrough", "custom"]);
 const SP_MODE_FILE = path.join(__dirname, "_origin_mode.txt");
 
 function _loadModeFromDisk() {
@@ -386,7 +386,8 @@ function _saveModeToDisk(mode) {
   } catch {}
 }
 
-let SP_MODE = _loadModeFromDisk() || process.env.SP_MODE || "invert";
+const _configuredMode = _loadModeFromDisk() || process.env.SP_MODE;
+let SP_MODE = SP_MODE_VALID.has(_configuredMode) ? _configuredMode : "custom";
 const START_TIME = Date.now();
 let reqCounter = 0;
 let _getIdeContext = null;
@@ -874,6 +875,10 @@ function _customSpFile() {
   return process.env.ZK_CUSTOM_SP_FILE || path.join(_zkDataDir(), "ide_prompt.json");
 }
 const _CUSTOM_SP_FILE = _customSpFile();
+function _bundledCustomSpFile() {
+  return path.join(__dirname, "_antigravity_rules.txt");
+}
+const _BUNDLED_CUSTOM_SP_FILE = _bundledCustomSpFile();
 let _customSP = null;
 function _loadCustomSP() {
   for (const fp of [_CUSTOM_SP_FILE, _LEGACY_CUSTOM_SP_FILE]) {
@@ -898,6 +903,19 @@ function _saveCustomSP() {
   } catch {}
 }
 _customSP = _loadCustomSP();
+function _loadBundledCustomSP() {
+  try {
+    if (!fs.existsSync(_BUNDLED_CUSTOM_SP_FILE)) return "";
+    const text = fs.readFileSync(_BUNDLED_CUSTOM_SP_FILE, "utf8");
+    return text.trim() ? text : "";
+  } catch {
+    return "";
+  }
+}
+const _bundledCustomSP = _loadBundledCustomSP();
+function _effectiveCustomSP() {
+  return _customSP && _customSP.sp ? String(_customSP.sp) : _bundledCustomSP;
+}
 
 // v17.55 · 实注捕获 · 观而不改 · 最近一次真实 SP 注入事件
 // 落盘持存 · 跨重启恒显 · 进程退不失 · 致虚守静 · 观复知常
@@ -2173,6 +2191,13 @@ function invertSP(spText) {
     if (spText === undefined || spText === null) return null;
     const s = typeof spText === "string" ? spText : String(spText);
     if (!s) return null;
+    if (SP_MODE === "custom") {
+      const custom = _effectiveCustomSP();
+      if (!custom) return null;
+      if (_spInvertLib && _spInvertLib.isAlreadyInverted(s)) return null;
+      if (_spInvertLib && !_spInvertLib.isLikelyOfficialSP(s)) return null;
+      return custom;
+    }
     // 自定义 SP 优先 · ZK法自然 · 用户即ZK (source.js 独有 · sp_invert.js 不处理)
     if (_customSP && _customSP.sp) {
       if (_spInvertLib && _spInvertLib.isAlreadyInverted(s)) return null;
@@ -2205,6 +2230,10 @@ function invertAnySP(spText) {
     if (spText === undefined || spText === null) return null;
     const s = typeof spText === "string" ? spText : String(spText);
     if (!s) return null;
+    if (SP_MODE === "custom") {
+      const t = _spInvertLib ? _spInvertLib.classifySPType(s) : null;
+      return t === "chat" ? _effectiveCustomSP() || null : null;
+    }
     // _customSP 仅 chat 路径生效 · ZK法自然 · 用户即ZK
     if (_customSP && _customSP.sp) {
       const t = _spInvertLib ? _spInvertLib.classifySPType(s) : null;
@@ -2249,6 +2278,7 @@ function _geminiPartsText(parts) {
 }
 
 function _geminiFallbackSystemText() {
+  if (SP_MODE === "custom") return _effectiveCustomSP();
   if (_customSP && _customSP.sp) return String(_customSP.sp);
   if (_activeCanonText) return _canonHeader(_activeCanon) + _activeCanonText + TAO_FOOTER;
   return "";
@@ -3715,7 +3745,7 @@ function handleControl(req, res) {
         ? Math.round((Date.now() - previewInject.at) / 1000)
         : null;
     let after = null;
-    if (SP_MODE === "invert") {
+    if (SP_MODE === "invert" || SP_MODE === "custom") {
       after = hasBefore ? invertSP(before) || before : null;
     } else {
       after = before;
@@ -4037,17 +4067,12 @@ function handleControl(req, res) {
   if (isIdePromptPath && req.method === "GET") {
     // v9.9.18 · 印 126 · default_sp 随 _activeCanon 动态 · 不再硬编码 DAO_DE_JING_81
     // 反者ZK之动 · 经藏多门 · 切换经藏后编模式兜底亦随经而变 · 名实相符
-    const _defaultSP =
-      _customSP && _customSP.sp
-        ? _customSP.sp
-        : _activeCanonText
-          ? _canonHeader(_activeCanon) + _activeCanonText + TAO_FOOTER
-          : "";
-    const _defaultSource = _customSP && _customSP.sp ? "custom" : _activeCanon;
+    const _defaultSP = _effectiveCustomSP();
+    const _defaultSource = _customSP && _customSP.sp ? "custom" : "bundled_rules";
     const _defaultSourceName =
       _customSP && _customSP.sp
         ? "\u81ea\u5b9a\u4e49"
-        : (_CANON_MAP[_activeCanon] || {}).name || _activeCanon;
+        : "Antigravity rules";
     if (!_customSP || !_customSP.sp) {
       res.end(
         JSON.stringify({
@@ -6844,7 +6869,7 @@ const _mainHandler = async (req, res) => {
     //   先改SP → 再路由 → 不论官方还是外接API都拿到同样的SP
     //   无为无以为 · 不增不减 · 只剔除残留
     let _eaBody = body;
-    if (SP_MODE === "invert") {
+    if (SP_MODE === "invert" || SP_MODE === "custom") {
       if (kind === "CHAT_PROTO") {
         _eaBody = modifySPProto(body);
       } else if (kind === "CHAT_RAW") {
@@ -7160,7 +7185,7 @@ const _mainHandler = async (req, res) => {
     //    此处不再重复计算 · 一次改 · 两路用 · 物无非彼物无非是
     //    INFER_STRIP: 仅剥侧信ZK · 不碰 SP (4.5P 不处理此 kind)
     let modified = _eaBody;
-    if (SP_MODE === "invert" && kind === "INFER_STRIP") {
+    if ((SP_MODE === "invert" || SP_MODE === "custom") && kind === "INFER_STRIP") {
       const r = deepStripRequestBody(_eaBody);
       modified = r.body;
       if (r.changed > 0) {

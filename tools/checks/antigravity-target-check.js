@@ -474,6 +474,7 @@ function assertGeminiRestPromptRuntime(file) {
       'const _activeCanon = "check-canon";',
       'const _activeCanonText = "DEFAULT_ANTIGRAVITY_ZK_PROMPT";',
       'const TAO_FOOTER = "\\nDEFAULT_FOOTER";',
+      'const SP_MODE = "invert";',
       "let _customSP = null;",
       "function _canonHeader(name) { return `HEADER:${name}\\n`; }",
       "function invertSP(text) { return String(text).includes('OFFICIAL_ANTIGRAVITY_SP') ? `INVERTED:${text}` : null; }",
@@ -695,6 +696,93 @@ function assertCustomPromptPersistenceRuntime(file) {
   }
 }
 
+function assertBundledCustomPromptRuntime(file) {
+  const rulesFile = path.join(
+    ROOT,
+    "plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt",
+  );
+  const expected = fs.readFileSync(rulesFile, "utf8");
+  if (!expected.trim()) throw new Error(`${rulesFile}: custom prompt is empty`);
+  const sandbox = {
+    module: { exports: {} },
+    __dirname: path.dirname(rulesFile),
+    fs,
+    path,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(
+    [
+      functionSource(file, "_bundledCustomSpFile"),
+      "const _BUNDLED_CUSTOM_SP_FILE = _bundledCustomSpFile();",
+      functionSource(file, "_loadBundledCustomSP"),
+      "const _bundledCustomSP = _loadBundledCustomSP();",
+      "let _customSP = null;",
+      functionSource(file, "_effectiveCustomSP"),
+      'const SP_MODE = "custom";',
+      "const _spInvertLib = { isAlreadyInverted: () => false, isLikelyOfficialSP: (text) => text === 'OFFICIAL' };",
+      "function log() {}",
+      functionSource(file, "invertSP"),
+      "const fallback = _effectiveCustomSP();",
+      'let override = "";',
+      '_customSP = { sp: "OVERRIDE" };',
+      "override = _effectiveCustomSP();",
+      "_customSP = null;",
+      'const injected = invertSP("OFFICIAL");',
+      'const rejected = invertSP("USER");',
+      "module.exports = { fallback, override, injected, rejected };",
+    ].join("\n"),
+    sandbox,
+    { filename: file },
+  );
+  if (sandbox.module.exports.fallback !== expected) {
+    throw new Error(`${file}: bundled custom prompt does not match ${rulesFile}`);
+  }
+  if (sandbox.module.exports.override !== "OVERRIDE") {
+    throw new Error(`${file}: saved custom prompt does not override bundled default`);
+  }
+  if (sandbox.module.exports.injected !== expected || sandbox.module.exports.rejected !== null) {
+    throw new Error(`${file}: custom mode did not replace only the official prompt with bundled rules`);
+  }
+}
+
+function assertLsMainBridgePortRuntime(file) {
+  const writes = new Map();
+  const sandbox = {
+    module: { exports: {} },
+    fs: {
+      mkdirSync() {},
+      writeFileSync(target, value) {
+        writes.set(path.normalize(target), JSON.parse(value));
+      },
+    },
+    os: {
+      homedir: () => path.join("C:", "Users", "bridge-test"),
+      userInfo: () => ({ username: "bridge-test" }),
+    },
+    path,
+    process: { pid: 1234 },
+    PKG_VERSION: "9.9.500",
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(
+    [
+      functionSource(file, "_publishPort"),
+      "_publishPort(8937);",
+    ].join("\n"),
+    sandbox,
+    { filename: file },
+  );
+  for (const stateDir of [".zk", ".dao"]) {
+    const target = path.normalize(
+      path.join("C:", "Users", "bridge-test", stateDir, "origin-port.json"),
+    );
+    const state = writes.get(target);
+    if (!state || state.port !== 8937) {
+      throw new Error(`${file}: LS Main bridge port was not published to ${target}`);
+    }
+  }
+}
+
 function assertLiveOfficialPromptPreview(file) {
   assertIncludes(file, "let _liveInjectAt = 0;", "live official prompt marker");
   assertIncludes(file, "function _hasLiveInject()", "live official prompt guard");
@@ -723,10 +811,16 @@ for (const file of extensionFiles) {
   assertRegex(file, /const\s+TARGET_IDE\s*=\s*"Antigravity"/, "target IDE constant");
   assertRegex(
     file,
+    /const\s+TARGET_IDE_WINDOWS_EXECUTABLE\s*=\s*"Antigravity\.exe"/,
+    "exact Antigravity executable target",
+  );
+  assertRegex(
+    file,
     /const\s+TARGET_IDE_SETTINGS_NAMES\s*=\s*\[\s*"Antigravity"\s*\]/,
     "target IDE settings names",
   );
   assertIncludes(file, "/origin/custom_sp", "custom prompt endpoint");
+  assertIncludes(file, '[".zk", ".dao"]', "LS Main bridge compatibility port");
   assertIncludes(file, "提示词", "short prompt UI wording");
   assertIncludes(file, "输入自定义提示词", "short custom prompt placeholder");
   assertIncludes(file, "\\u5df2\\u4fdd\\u5b58", "short save status");
@@ -786,7 +880,7 @@ for (const file of extensionFiles) {
     "pro edit tab has one-click mode switch": (fn) =>
       !file.includes("zk-proxy-pro") ||
       (fn.includes("openEditMode(true, true);") &&
-        fn.includes("vsc.postMessage({ command: 'setMode', mode: 'zk' });")),
+        fn.includes("vsc.postMessage({ command: 'setMode', mode: 'custom' });")),
     "pro official and edit tabs cannot both be active": (fn) =>
       !file.includes("zk-proxy-pro") ||
       (fn.includes("$btnOff.classList.toggle('active', tab === 'official');") &&
@@ -838,6 +932,7 @@ for (const file of extensionFiles) {
   );
   assertEndpointRewriteRuntime(file);
   assertSettingsJsoncRuntime(file);
+  assertLsMainBridgePortRuntime(file);
   if (file.includes("zk-proxy-pro")) assertSelfUninstallRuntime(file);
 }
 
@@ -846,9 +941,21 @@ for (const file of [
 ]) {
   assertNoUndeclaredOs(file);
   assertRegex(file, /TARGET_IDE\s*=.*"Antigravity"/, "source target IDE");
+  assertRegex(
+    file,
+    /const\s+SP_MODE_VALID\s*=\s*new Set\(\["passthrough",\s*"custom"\]\)/,
+    "official/custom prompt modes only",
+  );
+  assertIncludes(file, 'let SP_MODE = SP_MODE_VALID.has(_configuredMode) ? _configuredMode : "custom";', "custom mode default");
   assertIncludes(file, "ide_prompt.json", "custom IDE prompt persistence file");
   assertIncludes(file, "/origin/ide_prompt", "custom prompt alias endpoint");
   assertIncludes(file, "_saveCustomSP();", "custom prompt persistence call");
+  assertIncludes(file, 'path.join(__dirname, "_antigravity_rules.txt")', "bundled custom prompt file");
+  assertIncludes(file, 'SP_MODE === "invert" || SP_MODE === "custom"', "custom mode request rewrite");
+  assertFunctionBody(file, "_geminiFallbackSystemText", {
+    "custom mode never falls back to scripture": (fn) =>
+      fn.includes('if (SP_MODE === "custom") return _effectiveCustomSP();'),
+  });
   assertIncludes(
     file,
     "daily-cloudcode-pa.googleapis.com",
@@ -867,6 +974,7 @@ for (const file of [
   assertGeminiRestPromptRuntime(file);
   assertKeepBlocksRuntime(file);
   assertCustomPromptPersistenceRuntime(file);
+  assertBundledCustomPromptRuntime(file);
   assertLiveOfficialPromptPreview(file);
 }
 
@@ -878,9 +986,33 @@ for (const file of [
 
 const proPkg = JSON.parse(read("plugins/zk-proxy-pro/package.json"));
 assertPackageVersion("plugins/zk-proxy-pro/package.json", proPkg.version);
+if (`${proPkg.publisher}.${proPkg.name}` !== "dao-agi.dao-proxy-pro") {
+  throw new Error(
+    "plugins/zk-proxy-pro/package.json: extension id must match the pre-LS bridge dao-agi.dao-proxy-pro",
+  );
+}
+if (read("plugins/zk-proxy-pro/vendor/bundled-origin/_origin_mode.txt").trim() !== "custom") {
+  throw new Error("plugins/zk-proxy-pro/vendor/bundled-origin/_origin_mode.txt: default must be custom");
+}
+const defaultMode =
+  proPkg.contributes &&
+  proPkg.contributes.configuration &&
+  proPkg.contributes.configuration.properties &&
+  proPkg.contributes.configuration.properties["zk.origin.defaultMode"];
+if (!defaultMode || defaultMode.default !== "custom") {
+  throw new Error("plugins/zk-proxy-pro/package.json: default prompt mode must be custom");
+}
+if (JSON.stringify(defaultMode.enum) !== JSON.stringify(["passthrough", "custom"])) {
+  throw new Error("plugins/zk-proxy-pro/package.json: prompt modes must be official/custom only");
+}
 
-const proVsix = `dist/zk-proxy-pro-${proPkg.version}.vsix`;
+const proVsix = `dist/${proPkg.name}-${proPkg.version}.vsix`;
 if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
+  assertVsixEntryEqualsSource(
+    proVsix,
+    "extension/package.json",
+    "plugins/zk-proxy-pro/package.json",
+  );
   assertVsixEntryEqualsSource(
     proVsix,
     "extension/extension.js",
@@ -890,6 +1022,16 @@ if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
     proVsix,
     "extension/vendor/bundled-origin/source.js",
     "plugins/zk-proxy-pro/vendor/bundled-origin/source.js",
+  );
+  assertVsixEntryEqualsSource(
+    proVsix,
+    "extension/vendor/bundled-origin/_antigravity_rules.txt",
+    "plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt",
+  );
+  assertVsixEntryEqualsSource(
+    proVsix,
+    "extension/vendor/bundled-origin/_origin_mode.txt",
+    "plugins/zk-proxy-pro/vendor/bundled-origin/_origin_mode.txt",
   );
 }
 

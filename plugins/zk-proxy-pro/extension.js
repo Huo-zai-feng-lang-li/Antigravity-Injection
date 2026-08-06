@@ -149,10 +149,10 @@ const DEFAULT_PORT = 8889;
 const OFFICIAL_API_URL = "https://server.codeium.com";
 const OFFICIAL_INFER_URL = "https://inference.codeium.com";
 const TARGET_IDE = "Antigravity";
-const TARGET_IDE_WINDOWS_EXECUTABLE = "Antigravity-1.20.6.exe";
+const TARGET_IDE_WINDOWS_EXECUTABLE = "Antigravity.exe";
 const TARGET_IDE_CDP_ARG = "--remote-debugging-port=9000";
 const TARGET_IDE_LAUNCH_HINT =
-  "Antigravity-1.20.6.exe --remote-debugging-port=9000";
+  "D:\\Antigravity\\Antigravity.exe --remote-debugging-port=9000";
 const TARGET_IDE_SETTINGS_NAMES = ["Antigravity"];
 const COMPAT_IDE_SETTINGS_NAMES = [];
 const IDE_SETTINGS_NAMES = ["Antigravity"];
@@ -177,7 +177,7 @@ const DAO_QUOTES = [
 let _cachedPort = DEFAULT_PORT;
 let _cachedProxyUrl = `http://127.0.0.1:${DEFAULT_PORT}`;
 let _cachedAnchored = false;
-let _cachedMode = "invert";
+let _cachedMode = "custom";
 let _activateTs = 0; // v9.9.36 · ext-host 生命周期追踪 · smart deactivate
 let _deferredAnchorTimer = null; // v9.9.36 · 延迟锚定计时器 · 渡过 Installation Modified 危窗
 // ★ v9.9.272 · 软编码适配一切环境 · 柔弱胜刚强 · 失败安全
@@ -644,21 +644,20 @@ function _isRemoteStale(remoteSelfFile) {
 // ═══════════════════════════ v9.9.272 · 软编码端口 · 失败安全 ═══════════════════════════
 // 七十八章「天下莫柔弱于水 · 而攻坚强者莫之能胜」· 不争固定端口 · 唯变所适
 function _publishPort(port) {
-  try {
-    const dir = path.join(os.homedir(), ".zk");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(
-      path.join(dir, "origin-port.json"),
-      JSON.stringify({
-        port,
-        pid: process.pid,
-        version: PKG_VERSION,
-        user: os.userInfo().username,
-        at: Date.now(),
-      }),
-      "utf8",
-    );
-  } catch {}
+  const state = JSON.stringify({
+    port,
+    pid: process.pid,
+    version: PKG_VERSION,
+    user: os.userInfo().username,
+    at: Date.now(),
+  });
+  for (const name of [".zk", ".dao"]) {
+    try {
+      const dir = path.join(os.homedir(), name);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, "origin-port.json"), state, "utf8");
+    } catch {}
+  }
 }
 
 // OS 分配空闲端口 (port:0) · 当 FNV 段被 Devin 自身/多实例占满时让位避撞
@@ -716,7 +715,7 @@ async function _reusePublishedProxy(mode) {
     if (
       ping &&
       ping.ok &&
-      (ping.mode === "invert" || ping.mode === "passthrough")
+      (ping.mode === "custom" || ping.mode === "passthrough")
     ) {
       // ★ v9.9.272 · 仅复用「兼容且最新」的反代 · 否则不复用(回退自绑全功能后端)
       if (await _remoteIncompatible(p, ping.self_file)) {
@@ -823,7 +822,7 @@ async function proxyStart(port, mode, _retried, _altAttempts) {
       if (
         ping &&
         ping.ok &&
-        (ping.mode === "invert" || ping.mode === "passthrough")
+        (ping.mode === "custom" || ping.mode === "passthrough")
       ) {
         // v9.9.21/272 · 检远端是否「不兼容」(非最新 self_file 或 无 ea 能力) · 不兼容则让位
         // 二十二章「夫唯不争 故莫能与之争」 · 七十六章「兵强则不胜」
@@ -909,7 +908,7 @@ async function proxyStop() {
 
 // 远程 handle: 端口已有 proxy (多窗口) → 复用而非销毁
 function _createRemoteHandle(port, mode) {
-  let _mode = mode || "invert";
+  let _mode = mode || "custom";
   return {
     port,
     host: "127.0.0.1",
@@ -2097,7 +2096,7 @@ async function gatherEssence(port) {
 // ═══════════════════════════ 模式状态文本 ═══════════════════════════
 function getModeLabel() {
   const mode = proxyGetMode();
-  if (mode === "invert") return `ZKAgent · :${_cachedPort}`;
+  if (mode === "invert" || mode === "custom") return `ZKAgent · :${_cachedPort}`;
   return `官方Agent · 直连`;
 }
 
@@ -2918,7 +2917,7 @@ class EssenceProvider {
   }
 
   async _handleSetMode(mode) {
-    if (mode === "zk" || mode === "invert") await cmdInvert();
+    if (mode === "custom" || mode === "zk" || mode === "invert") await cmdInvert();
     else await cmdPassthrough();
     this._lastSig = "";
     setTimeout(() => this.forceRefresh().catch(() => {}), 300);
@@ -2971,7 +2970,7 @@ class EssenceProvider {
         error: r && r.error,
       });
       if (r && r.ok) {
-        proxySetMode("invert");
+        proxySetMode("custom");
         this._lastSig = "";
         setTimeout(() => this.forceRefresh().catch(() => {}), 300);
       }
@@ -3065,12 +3064,12 @@ class EssenceProvider {
 }
 
 // ═══════════════════════════ 命令: ZKAgent ═══════════════════════════
-async function cmdInvert() {
+async function cmdInvert(mode = "custom") {
   try {
     const { port } = cfg();
     const wasAnchored = _cachedAnchored;
-    await proxyStart(port, "invert");
-    proxySetMode("invert");
+    await proxyStart(port, mode);
+    proxySetMode(mode);
     await setAnchor(port);
     installSpawnHook();
     // 首次锚定才需重启 LS · 已锚定则纯翻转模式即可
@@ -3136,8 +3135,8 @@ async function cmdPassthrough() {
 // ═══════════════════════════ 命令: 切换 ═══════════════════════════
 async function cmdToggle() {
   const cur = proxyGetMode();
-  if (cur === "invert") await cmdPassthrough();
-  else await cmdInvert();
+  if (cur === "invert" || cur === "custom") await cmdPassthrough();
+  else await cmdInvert("custom");
 }
 
 // ═══════════════════════════ 命令: 浏览器观 ═══════════════════════════
@@ -3469,7 +3468,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
   var lastSP = '';
   var lastEntry = null;
   var lastSig = '';
-  var curMode = 'invert';
+  var curMode = 'custom';
   var editMode = false;
   var editBaseText = '';
   var editSaveTimer = null;
@@ -3563,7 +3562,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
     $editToggle.classList.toggle('active', tab === 'edit');
   }
   function setModeUI(mode) {
-    curMode = mode || 'invert';
+    curMode = mode || 'custom';
     setActiveTab(curMode === 'passthrough' && !editMode ? 'official' : 'edit');
   }
   $btnOff.addEventListener('click', function() {
@@ -3613,7 +3612,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
     editSaveTimer = setTimeout(flushEditSave, 600);
   }
   function openEditMode(focus, switchMode) {
-    setModeUI('invert');
+    setModeUI('custom');
     editMode = true;
     setActiveTab('edit');
     $editArea.classList.add('show');
@@ -3623,7 +3622,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
     setEditBaseText('');
     updateEditCount();
     $editStatus.textContent = '\u52a0\u8f7d\u4e2d\u2026';
-    if (switchMode !== false) vsc.postMessage({ command: 'setMode', mode: 'zk' });
+    if (switchMode !== false) vsc.postMessage({ command: 'setMode', mode: 'custom' });
     vsc.postMessage({ command: 'getCustomSP' });
     if (focus !== false) $editText.focus();
   }
@@ -3673,7 +3672,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
     var items = [
       { label: 'Proxy', on: true, k: 'proxy' },
       { label: 'Capture', on: !!(p.tape_count > 0), k: 'cap' },
-      { label: 'Mode', on: p.mode === 'invert', k: 'mode' }
+      { label: 'Mode', on: p.mode === 'custom', k: 'mode' }
     ];
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
@@ -3833,7 +3832,7 @@ function getEssenceHtml(port, nonce, initialSP, webview, extensionUri) {
           $editStatus.textContent = '\u2714 \u5df2\u4fdd\u5b58 ' + (r.chars || 0) + '\u5b57';
           setEditBaseText(editSavingText || $editText.value || '');
           editSavingText = '';
-          setModeUI('invert');
+          setModeUI('custom');
           updateCustomBadge(true, r.chars);
           updateEditCount();
           if (isEditDirty()) scheduleEditSave();
@@ -4026,7 +4025,7 @@ function refreshStatusBar() {
   const port = _cachedPort || "—";
   _statusBarItem.text = `$(circuit-board) ZKAgent Pro · ${mode}`;
   _statusBarItem.tooltip =
-    `ZKAgent Pro · 模式=${_cachedMode || "invert"} · 端口=${port}\n` +
+    `ZKAgent Pro · 模式=${_cachedMode || "custom"} · 端口=${port}\n` +
     `打开「提示词 / 渠ZK / 路由」`;
   _statusBarItem.show();
 }
@@ -4116,7 +4115,7 @@ function activate(ctx) {
     _cachedAnchored = isAnchored();
     _cachedMode = vscode.workspace
       .getConfiguration("zk")
-      .get("origin.defaultMode", "invert");
+      .get("origin.defaultMode", "custom");
 
     // Antigravity 主目标: 优先识别 D:\Antigravity\Antigravity.exe --remote-debugging-port=9000。
     // 旧 Antigravity/Devin 运行时仅作为兼容兜底，不再作为主目标。
@@ -4266,7 +4265,7 @@ function activate(ctx) {
       );
       // ACP 模式下也启动 HTTP 代理 + 锚定 · 因对话走 gRPC/HTTP
       const _originalPort = _cachedPort;
-      proxyStart(_cachedPort, _cachedMode || "invert")
+      proxyStart(_cachedPort, _cachedMode || "custom")
         .then((handle) => {
           if (!handle) {
             L.warn(
@@ -4277,7 +4276,7 @@ function activate(ctx) {
             clearAnchor().catch(() => {});
             return;
           }
-          proxySetMode(_cachedMode || "invert");
+          proxySetMode(_cachedMode || "custom");
           L.info("activate", "ACP+HTTP: proxy 就位 · 延迟锚定");
           // ★ v9.9.261 · EACCES 回退后需 forceRestartLS · LS 仍指向旧端口
           if (_cachedPort !== _originalPort) {
@@ -4306,7 +4305,7 @@ function activate(ctx) {
         });
     } else if (_cachedAnchored) {
       L.info("activate", "settings anchored → auto-restore proxy");
-      proxyStart(_cachedPort, _cachedMode || "invert")
+      proxyStart(_cachedPort, _cachedMode || "custom")
         .then((handle) => {
           if (!handle) {
             // v9.9.272 · 失败安全 · 反代无法绑定 → 清锚还官方 · watchdog 重试
@@ -4318,7 +4317,7 @@ function activate(ctx) {
             clearAnchor().catch(() => {});
             return;
           }
-          proxySetMode(_cachedMode || "invert");
+          proxySetMode(_cachedMode || "custom");
           setAnchor(_cachedPort).catch(() => {});
           L.info("activate", `auto-restore done · 锚定实际端口 :${_cachedPort}`);
         })
@@ -4342,7 +4341,7 @@ function activate(ctx) {
       (async () => {
         let handle;
         try {
-          handle = await proxyStart(_cachedPort, _cachedMode || "invert");
+          handle = await proxyStart(_cachedPort, _cachedMode || "custom");
         } catch (e) {
           L.error("activate", `first-run proxy fail: ${e.message}`);
           return;
@@ -4357,7 +4356,7 @@ function activate(ctx) {
           clearAnchor().catch(() => {});
           return;
         }
-        proxySetMode(_cachedMode || "invert");
+        proxySetMode(_cachedMode || "custom");
         // 内存先锚 · spawn hook 立即生效 · 文件延后
         _cachedAnchored = true;
         _cachedProxyUrl = `http://127.0.0.1:${_cachedPort}`;
@@ -4420,14 +4419,14 @@ function activate(ctx) {
           }
           L.warn("watchdog", `proxy 死/旧 · 重起 :${port}`);
           _proxyHandle = null;
-          const handle = await proxyStart(port, _cachedMode || "invert").catch(
+          const handle = await proxyStart(port, _cachedMode || "custom").catch(
             (e) => {
               L.error("watchdog", `restart fail: ${e.message}`);
               return null;
             },
           );
           if (handle) {
-            proxySetMode(_cachedMode || "invert");
+            proxySetMode(_cachedMode || "custom");
             setAnchor(_cachedPort).catch(() => {});
             L.info("watchdog", `proxy 复活 · 锚定 :${_cachedPort}`);
           } else {
@@ -5967,7 +5966,7 @@ function getEaConfigHtml(port, nonce) {
   }
   // ═══ ① 提示词 · IDE 左侧复刻 (官/编 + 文本池 · 与左侧同源) ═══
   function _e1El(id) { return document.getElementById(id); }
-  var _e1Mode = 'invert';
+  var _e1Mode = 'custom';
   var _e1LastAgeS = null;
   var _e1EditOpen = false;
   var _e1EditBaseText = '';
@@ -5976,10 +5975,10 @@ function getEaConfigHtml(port, nonce) {
   function _e1SetMode(m) {
     _e1Mode = m;
     var o = _e1El('e1Off'), e = _e1El('e1Edit');
-    if (o) o.classList.toggle('add', m !== 'invert');
-    if (e) e.classList.toggle('add', m === 'invert');
+    if (o) o.classList.toggle('add', m !== 'custom');
+    if (e) e.classList.toggle('add', m === 'custom');
     var dots = _e1El('e1Dots');
-    if (dots) dots.style.background = (m === 'invert') ? '#6bb86b' : '#d9a441';
+    if (dots) dots.style.background = (m === 'custom') ? '#6bb86b' : '#d9a441';
   }
   function _e1LoadPreview() {
     fJson('/origin/preview').then(function(d) {
@@ -6037,7 +6036,7 @@ function getEaConfigHtml(port, nonce) {
     }).catch(function() { if (st) st.textContent = '加载经文网络异常'; });
   }
   function _e1OpenEdit(focus) {
-    _e1SetMode('invert');
+    _e1SetMode('custom');
     _e1EditOpen = true;
     var area = _e1El('e1EditArea');
     var tx = _e1El('e1EditText'), st = _e1El('e1EditStatus');
@@ -6061,8 +6060,8 @@ function getEaConfigHtml(port, nonce) {
     _e1SavingText = tx.value;
     if (st) st.textContent = '保存中…';
     fPost('/origin/custom_sp', { sp: tx.value, source: 'webview-e1' }).then(function() {
-      _e1SetMode('invert');
-      fPost('/origin/mode', { mode: 'invert' }).catch(function() {});
+      _e1SetMode('custom');
+      fPost('/origin/mode', { mode: 'custom' }).catch(function() {});
       if (st) st.textContent = '已保存';
       _e1SetEditBaseText(_e1SavingText || tx.value || '');
       _e1SavingText = '';

@@ -1,9 +1,9 @@
 {
-  "name": "zk-proxy-pro",
+  "name": "dao-proxy-pro",
   "displayName": "ZKAgent Pro · 外接API · 反者ZK之动",
   "description": "Antigravity 提示词反代 + 外接 API：自定义提示词、渠ZK、路由、用量。完整历史见 CHANGELOG。",
 	"version": "9.9.500",
-  "publisher": "zk-agi",
+  "publisher": "dao-agi",
   "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.85.0"
@@ -147,18 +147,16 @@
         },
         "zk.origin.defaultMode": {
           "type": "string",
-          "default": "invert",
+          "default": "custom",
           "enum": [
-            "invert",
             "passthrough",
             "custom"
           ],
           "enumDescriptions": [
-            "invert — ZKAgent · ZK直为前置 + 彻删官方一切着相之名 (身份/风格/规训) · 工具本身全保不动",
             "passthrough — 官方Agent · 锚归云 · 直连",
-            "custom — 自定义SP · 用户编辑 _customSp.txt · 保留实时信息块"
+            "custom — 编 · 默认注入 _antigravity_rules.txt，可在面板编辑"
           ],
-          "description": "首激默模 (三态互斥 · 无off)"
+          "description": "首激默模（官方/编二态互斥）"
         },
         "zk.origin.banner": {
           "type": "boolean",
