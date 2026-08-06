@@ -51,19 +51,20 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.all }}" = "true" ]; then
             MODS=$(node tools/detect-modules.js --all)
           else
+            touch changed.txt
             BEFORE="${{ github.event.before }}"
             ZERO="0000000000000000000000000000000000000000"
             if [ -n "$BEFORE" ] && [ "$BEFORE" != "$ZERO" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-              git diff --name-only "$BEFORE" "${{ github.sha }}" > changed.txt
+              git diff --name-only "$BEFORE" "${{ github.sha }}" > changed.txt 2>/dev/null || true
             else
               # workflow_dispatch / 无 before：取合并提交相对首亲的差异 = 被合 PR 的改动
-              git diff --name-only "${{ github.sha }}^" "${{ github.sha }}" > changed.txt 2>/dev/null || git diff --name-only HEAD~1 HEAD > changed.txt
+              git diff --name-only "${{ github.sha }}^" "${{ github.sha }}" > changed.txt 2>/dev/null || git diff --name-only HEAD~1 HEAD > changed.txt 2>/dev/null || true
             fi
             echo "changed files:"; cat changed.txt || true
-            MODS=$(node tools/detect-modules.js --files changed.txt)
+            MODS=$(node tools/detect-modules.js --files changed.txt 2>/dev/null || node tools/detect-modules.js --all)
           fi
           echo "modules=$MODS" >> "$GITHUB_OUTPUT"
-          if [ "$MODS" = "[]" ]; then echo "any=false" >> "$GITHUB_OUTPUT"; else echo "any=true" >> "$GITHUB_OUTPUT"; fi
+          if [ "$MODS" = "[]" ] || [ -z "$MODS" ]; then echo "any=false" >> "$GITHUB_OUTPUT"; else echo "any=true" >> "$GITHUB_OUTPUT"; fi
           echo "detected modules: $MODS"
 
   release:

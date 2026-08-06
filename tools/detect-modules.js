@@ -34,7 +34,7 @@ function readChanged(a) {
   if (a.mode === "all") return null;
   let raw = "";
   if (a.mode === "stdin") raw = fs.readFileSync(0, "utf8");
-  else if (a.src) raw = fs.readFileSync(a.src, "utf8");
+  else if (a.src && fs.existsSync(a.src)) raw = fs.readFileSync(a.src, "utf8");
   return raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
 }
 
