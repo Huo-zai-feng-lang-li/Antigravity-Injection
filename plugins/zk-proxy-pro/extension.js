@@ -134,7 +134,7 @@ const PKG_NAME = (() => {
   try {
     return require("./package.json").name;
   } catch {
-    return "zk-proxy-min";
+    return "zk-proxy-pro";
   }
 })();
 const SELF_EXT_ID = `${PKG_PUBLISHER}.${PKG_NAME}`; // "zk-agi.zk-proxy-min"

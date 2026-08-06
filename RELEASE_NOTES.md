@@ -1,6 +1,6 @@
 # Antigravity-Injection · Bug 更新与版本发布迭代文档
 
-> 本文档用于记录 **Antigravity-Injection** 套件（包含 `zk-proxy-pro`、`zk-proxy-min`、`rt-flow`）的版本递增、Bug 修复点及发布迭代历史。
+> 本文档用于记录 **Antigravity-Injection** 核心插件 `zk-proxy-pro` 的版本递增、Bug 修复点及发布迭代历史。
 >
 > ⚠️ **维护规范**：后续进行版本递增与 Release 发布时，必须同步维护更新本文档；若仅仅是日常代码重构或未递增版本号的小改动，则无需更新提交。
 
@@ -10,13 +10,21 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`zk-proxy-pro`** | `v9.9.342` | 核心全功能提示词反代 + 外接 API + 109 模型目录解锁 + ACP stdio 代理 |
-| **`zk-proxy-min`** | `v9.9.81` | 同构精简镜像（纯系统提示词路径） |
-| **`rt-flow`** | `v3.16.0` | WAM 账号管理与自适应切号器 |
+| **`zk-proxy-pro`** | `v9.9.343` | 核心全功能提示词反代 + 外接 API + 109 模型目录解锁 + ACP stdio 代理 |
 
 ---
 
 ## 📜 版本发布与 Bug 修复迭代日志
+
+### 🚀 v9.9.343 (2026-08-06)
+- **重构类型**：核心架构重构与品牌统一 (ZK 命名全维度对齐)
+- **更新描述**：全维度将 `dao / 道` 替换为 `ZK` 命名标识，插件完全升级为 `zk-proxy-pro`。
+- **改动范围**：
+  1. 插件标识全盘升级为 `zk-agi.zk-proxy-pro`，全量测试用例及离线断言自检 100% 绿灯。
+  2. 精简架构，物理剔除废弃的 min 和 rt-flow 模块，打包体积更小、更轻量。
+  3. 说明文档全盘清理与对齐，彻底修复 Releases 与 VSIX 下载 404 问题。
+
+---
 
 ### 🚀 v9.9.342 (2026-08-06)
 - **修复类型**：Bug 修复 (Gemini REST 结构兼容性)
@@ -25,7 +33,6 @@
 - **修复方案**：
   1. 兼容读取公开根级 `contents[]` 与 Antigravity 私有 `request.contents[]`。
   2. 精确覆盖 `Generate a short conversation title`，保留第二行摘要协议的前提下将第一行改写为简体中文约束。
-  3. 同样逻辑同步至 `zk-proxy-min` (v9.9.81)，保证 Pro/Min 无缝镜像同构。
 
 ---
 
@@ -61,7 +68,7 @@
 - **修复内容**：
   1. 彻底解决 `/v1internal:streamGenerateContent` 内部契约 400 报错。
   2. 收束 Antigravity UI 面板文案与样式。
-  3. 系统提示词纯净化，不再强制拼接冗余模块，工具能力走原生通ZK。
+  3. 系统提示词纯净化，不再强制拼接冗余模块，工具能力走原生通道。
 
 ---
 
@@ -86,7 +93,7 @@
 3. **刷新 README 索引与测试**：
    ```bash
    node tools/gen-readme-index.js
-   node scripts/build-vsix.mjs <module_name>
+   node scripts/build-vsix.mjs
    ```
 4. **Git 提交推送**：
    ```bash
