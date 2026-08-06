@@ -1,9 +1,10 @@
-# 最新接续状态 (2026-08-06 04:11)
+# 最新接续状态 (2026-08-06 11:02)
 
 ## 核心进展
-- Bug 修复已完成：Antigravity 1.107.0 原生 Agent 新建会话历史标题已由英文改为简体中文，用户在 `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000` 运行链路实测通过。
-- DAO Proxy Pro 已发布并安装为 `9.9.342`，Min 同构镜像已同步为 `9.9.81`。
-- 构建产物：`dist/dao-proxy-pro-9.9.342.vsix`；SHA-256：`DA8E3B427D35F8335BF59EBD41332C60219D6DDFC4B27C714E8518E3D01CEC0E`。
+- **项目仓库与全量地址重构完成**：全代码库关联地址已统一迁移至 `https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection.git`，所有插件 package.json、工具脚本、页面及说明文档全部完成替换。
+- **重新初始化 Git 并成功推送**：已清理旧 Git 历史，全新初始化并提交 `first commit`，已推送到 `origin/main`。
+- **规范建立**：已编写并归档全套项目协作与开发规范（`.agent/rules/README.md`），明确了提示词注入拦截、JSONC 配置保存、端口计算及发布验证自检流程。
+- **历史功能维护**：Antigravity 1.107.0 原生 Agent 新建会话历史标题已由英文改为简体中文，Pro 9.9.342 / Min 9.9.81 在线镜像逻辑保持稳健运行。
 
 ## 核心动机与背景 (Motivation & Background)
 - 任务类型：Bug 修复型。
