@@ -39,23 +39,23 @@
 
 > 下表由 `tools/gen-readme-index.js` 据 `package.json` 版本自动维护。
 
-<!-- DAO-MODULE-INDEX:START -->
+<!-- ZK-MODULE-INDEX:START -->
 | 插件 | 版本 | 扩展 id | 说明 | Release / 下载 |
 |---|---|---|---|---|
-| **dao-proxy-pro** | `9.9.342` | `dao-agi.dao-proxy-pro` | Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。 | [Release](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/tag/dao-proxy-pro-v9.9.342) · [⬇ VSIX](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/download/dao-proxy-pro-v9.9.342/dao-proxy-pro-9.9.342.vsix) |
-<!-- DAO-MODULE-INDEX:END -->
+| **zk-proxy-pro** | `9.9.342` | `zk-agi.zk-proxy-pro` | Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。 | [Release](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/tag/zk-proxy-pro-v9.9.342) · [⬇ VSIX](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/download/zk-proxy-pro-v9.9.342/zk-proxy-pro-9.9.342.vsix) |
+<!-- ZK-MODULE-INDEX:END -->
 
 ---
 
 ## 🛠 代码架构与关键路径
 
 ### 1. 架构说明
-插件使用独立命名空间 `dao.*/wam.*` 与 per-user 端口 (`8937`)，提供底层代理、外接 API、模型路由及语言服务器 (LSP/ACP) 注入功能。
+插件使用独立命名空间 `zk.*/wam.*` 与 per-user 端口 (`8937`)，提供底层代理、外接 API、模型路由及语言服务器 (LSP/ACP) 注入功能。
 
 ### 2. 关键代码文件
-- `plugins/dao-proxy-pro/extension.js`: 扩展入口，负责 IDE 进程感知与配置 Hook。
-- `plugins/dao-proxy-pro/dao-acp-stdio-proxy.js`: ACP (stdio) 代理拦截服务。
-- `plugins/dao-proxy-pro/vendor/外接api/core/sp_invert.js`: 提示词判定与中文标题规范 (`TITLE_ONLY_ZH_SP`) 注入。
+- `plugins/zk-proxy-pro/extension.js`: 扩展入口，负责 IDE 进程感知与配置 Hook。
+- `plugins/zk-proxy-pro/zk-acp-stdio-proxy.js`: ACP (stdio) 代理拦截服务。
+- `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js`: 提示词判定与中文标题规范 (`TITLE_ONLY_ZH_SP`) 注入。
 - `tools/checks/antigravity-target-check.js`: Antigravity 自动化目标断言测试集。
 
 ---
@@ -74,7 +74,7 @@ Antigravity.exe --remote-debugging-port=9000
 ### 2. 打包与自检 (Node.js ≥ 18)
 ```bash
 # 构建插件 package
-node scripts/build-vsix.mjs dao-proxy-pro
+node scripts/build-vsix.mjs zk-proxy-pro
 
 # 运行自动化目标离线断言测试
 node tools/checks/antigravity-target-check.js

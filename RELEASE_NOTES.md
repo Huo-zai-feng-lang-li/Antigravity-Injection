@@ -1,6 +1,6 @@
 # Antigravity-Injection · Bug 更新与版本发布迭代文档
 
-> 本文档用于记录 **Antigravity-Injection** 套件（包含 `dao-proxy-pro`、`dao-proxy-min`、`rt-flow`）的版本递增、Bug 修复点及发布迭代历史。
+> 本文档用于记录 **Antigravity-Injection** 套件（包含 `zk-proxy-pro`、`zk-proxy-min`、`rt-flow`）的版本递增、Bug 修复点及发布迭代历史。
 >
 > ⚠️ **维护规范**：后续进行版本递增与 Release 发布时，必须同步维护更新本文档；若仅仅是日常代码重构或未递增版本号的小改动，则无需更新提交。
 
@@ -10,8 +10,8 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`dao-proxy-pro`** | `v9.9.342` | 核心全功能提示词反代 + 外接 API + 109 模型目录解锁 + ACP stdio 代理 |
-| **`dao-proxy-min`** | `v9.9.81` | 同构精简镜像（纯系统提示词路径） |
+| **`zk-proxy-pro`** | `v9.9.342` | 核心全功能提示词反代 + 外接 API + 109 模型目录解锁 + ACP stdio 代理 |
+| **`zk-proxy-min`** | `v9.9.81` | 同构精简镜像（纯系统提示词路径） |
 | **`rt-flow`** | `v3.16.0` | WAM 账号管理与自适应切号器 |
 
 ---
@@ -25,7 +25,7 @@
 - **修复方案**：
   1. 兼容读取公开根级 `contents[]` 与 Antigravity 私有 `request.contents[]`。
   2. 精确覆盖 `Generate a short conversation title`，保留第二行摘要协议的前提下将第一行改写为简体中文约束。
-  3. 同样逻辑同步至 `dao-proxy-min` (v9.9.81)，保证 Pro/Min 无缝镜像同构。
+  3. 同样逻辑同步至 `zk-proxy-min` (v9.9.81)，保证 Pro/Min 无缝镜像同构。
 
 ---
 
@@ -61,7 +61,7 @@
 - **修复内容**：
   1. 彻底解决 `/v1internal:streamGenerateContent` 内部契约 400 报错。
   2. 收束 Antigravity UI 面板文案与样式。
-  3. 系统提示词纯净化，不再强制拼接冗余模块，工具能力走原生通道。
+  3. 系统提示词纯净化，不再强制拼接冗余模块，工具能力走原生通ZK。
 
 ---
 
@@ -69,7 +69,7 @@
 - **修复类型**：卸载归零、卡死自救与 LS 自愈
 - **修复内容**：
   1. 提供智能保锚与 `deactivate` 真卸载侦测，防止卸载残留死端口导致 IDE 报错。
-  2. 提供 `scripts/dao-reset.ps1` 与 `scripts/dao-reset.sh` 独立归零工具。
+  2. 提供 `scripts/zk-reset.ps1` 与 `scripts/zk-reset.sh` 独立归零工具。
 
 ---
 

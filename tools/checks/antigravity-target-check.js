@@ -262,7 +262,7 @@ function assertEndpointRewriteRuntime(file) {
 }
 
 function assertSelfUninstallRuntime(file) {
-  const selfDir = "dao-agi.dao-proxy-pro-9.9.335";
+  const selfDir = "zk-agi.zk-proxy-pro-9.9.335";
   const extensionPath = `C:\\extensions\\${selfDir}`;
   const obsoletePath = "C:\\extensions\\.obsolete";
   const cases = [
@@ -274,7 +274,7 @@ function assertSelfUninstallRuntime(file) {
     },
     {
       name: "old version obsolete while current registered",
-      obsolete: { "dao-agi.dao-proxy-pro-9.9.334": true },
+      obsolete: { "zk-agi.zk-proxy-pro-9.9.334": true },
       registered: true,
       expected: false,
     },
@@ -296,8 +296,8 @@ function assertSelfUninstallRuntime(file) {
     const sandbox = {
       module: { exports: {} },
       _extContext: { extensionPath },
-      SELF_EXT_ID: "dao-agi.dao-proxy-pro",
-      SELF_EXT_DIR_REGEX: /^dao-agi\.dao-proxy-pro-/,
+      SELF_EXT_ID: "zk-agi.zk-proxy-pro",
+      SELF_EXT_DIR_REGEX: /^zk-agi\.zk-proxy-pro-/,
       fs: {
         existsSync(p) {
           return p === obsoletePath;
@@ -311,7 +311,7 @@ function assertSelfUninstallRuntime(file) {
       vscode: {
         extensions: {
           getExtension(id) {
-            if (id !== "dao-agi.dao-proxy-pro") {
+            if (id !== "zk-agi.zk-proxy-pro") {
               throw new Error(`unexpected extension id: ${id}`);
             }
             return c.registered ? {} : undefined;
@@ -472,7 +472,7 @@ function assertGeminiRestPromptRuntime(file) {
       'const API_SERVER_SERVICES = new Set(["exa.api_server_pb.ApiServerService", "exa.language_server_pb.LanguageServerService"]);',
       'const INFERENCE_SERVICES = new Set(["exa.language_server_pb.LanguageServerService", "exa.chat_web.ChatWebService", "exa.codeium_common_pb.CascadeService", "exa.codeium_common_pb.AutocompleteService", "exa.codeium_common_pb.CodeiumService", "exa.api_server_pb.ApiServerService"]);',
       'const _activeCanon = "check-canon";',
-      'const _activeCanonText = "DEFAULT_ANTIGRAVITY_DAO_PROMPT";',
+      'const _activeCanonText = "DEFAULT_ANTIGRAVITY_ZK_PROMPT";',
       'const TAO_FOOTER = "\\nDEFAULT_FOOTER";',
       "let _customSP = null;",
       "function _canonHeader(name) { return `HEADER:${name}\\n`; }",
@@ -572,7 +572,7 @@ function assertGeminiRestPromptRuntime(file) {
       .toString("utf8"),
   );
   const createdText = created.systemInstruction.parts[0].text;
-  if (!createdText.includes("DEFAULT_ANTIGRAVITY_DAO_PROMPT")) {
+  if (!createdText.includes("DEFAULT_ANTIGRAVITY_ZK_PROMPT")) {
     throw new Error(`${file}: Gemini REST public missing prompt did not inject default`);
   }
   const snake = JSON.parse(
@@ -628,7 +628,7 @@ function assertKeepBlocksRuntime(file) {
     "<workspace_information>",
     "<workspace_layout>",
     "- plugins/",
-    "  - dao-proxy-pro/",
+    "  - zk-proxy-pro/",
     "- README.md",
     "</workspace_layout>",
     "</workspace_information>",
@@ -652,11 +652,11 @@ function assertKeepBlocksRuntime(file) {
 
 function assertCustomPromptPersistenceRuntime(file) {
   const writes = new Map();
-  const customFile = "C:\\Users\\Administrator\\.codeium\\dao\\ide_prompt.json";
+  const customFile = "C:\\Users\\Administrator\\.codeium\\zk\\ide_prompt.json";
   const sandbox = {
     module: { exports: {} },
-    __dirname: "C:\\Users\\Administrator\\.antigravity\\extensions\\dao-agi.dao-proxy-test\\vendor\\bundled-origin",
-    process: { env: { DAO_CUSTOM_SP_FILE: customFile } },
+    __dirname: "C:\\Users\\Administrator\\.antigravity\\extensions\\zk-agi.zk-proxy-test\\vendor\\bundled-origin",
+    process: { env: { ZK_CUSTOM_SP_FILE: customFile } },
     os: { homedir: () => "C:\\Users\\Administrator" },
     path,
     fs: {
@@ -676,7 +676,7 @@ function assertCustomPromptPersistenceRuntime(file) {
   vm.runInContext(
     [
       'const _LEGACY_CUSTOM_SP_FILE = path.join(__dirname, "_custom_sp.json");',
-      functionSource(file, "_daoDataDir"),
+      functionSource(file, "_zkDataDir"),
       functionSource(file, "_customSpFile"),
       "const _CUSTOM_SP_FILE = _customSpFile();",
       'let _customSP = { sp: "反重力提示词反代测试", keep_blocks: false, source: "check", ide: "Antigravity", at: 1 };',
@@ -711,7 +711,7 @@ function assertLiveOfficialPromptPreview(file) {
 }
 
 const extensionFiles = [
-  "plugins/dao-proxy-pro/extension.js",
+  "plugins/zk-proxy-pro/extension.js",
 ];
 
 for (const file of extensionFiles) {
@@ -730,23 +730,23 @@ for (const file of extensionFiles) {
   assertIncludes(file, "提示词", "short prompt UI wording");
   assertIncludes(file, "输入自定义提示词", "short custom prompt placeholder");
   assertIncludes(file, "\\u5df2\\u4fdd\\u5b58", "short save status");
-  assertNotIncludes(file, 'id="btnDao"', "dao mode button removed");
+  assertNotIncludes(file, 'id="btnZk"', "zk mode button removed");
   assertNotIncludes(file, 'id="canonSelect"', "canon dropdown removed");
   assertNotIncludes(file, 'id="editReload"', "load current prompt button removed");
-  assertNotIncludes(file, 'id="editReset"', "reset to dao button removed");
+  assertNotIncludes(file, 'id="editReset"', "reset to zk button removed");
   assertNotIncludes(file, "自定义 IDE 模型提示词", "long custom prompt wording removed");
   assertNotIncludes(file, "Antigravity 系统提示词反代", "long prompt proxy title removed");
   assertNotIncludes(file, "保存后下次 chat 生效", "long prompt helper removed");
   assertNotIncludes(file, "\\u6ce8\\u5165", "inject wording removed from webview");
   assertNotIncludes(file, "\\u8f7d</button>", "load button wording removed from webview");
-  assertNotIncludes(file, "\\u5f52\\u9053", "return-to-dao wording removed from webview");
+  assertNotIncludes(file, "\\u5f52\\u9053", "return-to-zk wording removed from webview");
   assertNotIncludes(file, "canon_name", "canon name hidden from webview status");
   assertNotIncludes(file, "default_source_name", "default source name hidden from webview status");
   assertNotIncludes(file, "tao_header_chars", "tao header count hidden from webview status");
   assertNotIncludes(file, "本源体", "old essence wording removed from UI");
-  assertNotIncludes(file, "默认道德经路径", "old dao default wording removed from UI");
+  assertNotIncludes(file, "默认ZK路径", "old zk default wording removed from UI");
   assertNotIncludes(file, "帛书头", "scripture header wording removed from UI");
-  if (file.includes("dao-proxy-pro")) {
+  if (file.includes("zk-proxy-pro")) {
     assertIncludes(file, "function setActiveTab(tab)", "pro official/edit tab single active state");
     assertNotIncludes(file, 'id="editSave"', "pro manual save button removed");
     assertNotIncludes(file, 'id="e1Save"', "pro config panel manual save button removed");
@@ -776,7 +776,7 @@ for (const file of extensionFiles) {
       fn.includes("if (!isEditDirty()) _closeEditMode();") ||
       fn.includes("closeEditMode();"),
     "save ignores unchanged content": (fn) =>
-      file.includes("dao-proxy-pro")
+      file.includes("zk-proxy-pro")
         ? fn.includes("if (!isEditDirty()) return;")
         : fn.includes("if (!isEditDirty()) { $editStatus.textContent = '\\u672a\\u4fee\\u6539'; return; }"),
     "background mode refresh does not override edit tab": (fn) =>
@@ -784,15 +784,15 @@ for (const file of extensionFiles) {
       fn.includes("if (e.data.type === 'mode' && !editMode) setModeUI(e.data.mode);") &&
       fn.includes("if (_d.ping && _d.ping.mode && !editMode) setModeUI(_d.ping.mode);"),
     "pro edit tab has one-click mode switch": (fn) =>
-      !file.includes("dao-proxy-pro") ||
+      !file.includes("zk-proxy-pro") ||
       (fn.includes("openEditMode(true, true);") &&
-        fn.includes("vsc.postMessage({ command: 'setMode', mode: 'dao' });")),
+        fn.includes("vsc.postMessage({ command: 'setMode', mode: 'zk' });")),
     "pro official and edit tabs cannot both be active": (fn) =>
-      !file.includes("dao-proxy-pro") ||
+      !file.includes("zk-proxy-pro") ||
       (fn.includes("$btnOff.classList.toggle('active', tab === 'official');") &&
         fn.includes("$editToggle.classList.toggle('active', tab === 'edit');")),
     "pro edit tab autosaves changed content": (fn) =>
-      !file.includes("dao-proxy-pro") ||
+      !file.includes("zk-proxy-pro") ||
       (fn.includes("function scheduleEditSave()") &&
         fn.includes("vsc.postMessage({ command: 'setCustomSP', sp: sp.trim() });")),
   });
@@ -838,11 +838,11 @@ for (const file of extensionFiles) {
   );
   assertEndpointRewriteRuntime(file);
   assertSettingsJsoncRuntime(file);
-  if (file.includes("dao-proxy-pro")) assertSelfUninstallRuntime(file);
+  if (file.includes("zk-proxy-pro")) assertSelfUninstallRuntime(file);
 }
 
 for (const file of [
-  "plugins/dao-proxy-pro/vendor/bundled-origin/source.js",
+  "plugins/zk-proxy-pro/vendor/bundled-origin/source.js",
 ]) {
   assertNoUndeclaredOs(file);
   assertRegex(file, /TARGET_IDE\s*=.*"Antigravity"/, "source target IDE");
@@ -871,25 +871,25 @@ for (const file of [
 }
 
 for (const file of [
-  "plugins/dao-proxy-pro/package.json",
+  "plugins/zk-proxy-pro/package.json",
 ]) {
   assertIncludes(file, "antigravity", "package keyword");
 }
 
-const proPkg = JSON.parse(read("plugins/dao-proxy-pro/package.json"));
-assertPackageVersion("plugins/dao-proxy-pro/package.json", proPkg.version);
+const proPkg = JSON.parse(read("plugins/zk-proxy-pro/package.json"));
+assertPackageVersion("plugins/zk-proxy-pro/package.json", proPkg.version);
 
-const proVsix = `dist/dao-proxy-pro-${proPkg.version}.vsix`;
+const proVsix = `dist/zk-proxy-pro-${proPkg.version}.vsix`;
 if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
   assertVsixEntryEqualsSource(
     proVsix,
     "extension/extension.js",
-    "plugins/dao-proxy-pro/extension.js",
+    "plugins/zk-proxy-pro/extension.js",
   );
   assertVsixEntryEqualsSource(
     proVsix,
     "extension/vendor/bundled-origin/source.js",
-    "plugins/dao-proxy-pro/vendor/bundled-origin/source.js",
+    "plugins/zk-proxy-pro/vendor/bundled-origin/source.js",
   );
 }
 

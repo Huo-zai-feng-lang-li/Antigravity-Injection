@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 依 modules.json + 各模块当前版本，重新生成 README.md 里的「插件下载索引表」
-// （位于 <!-- DAO-MODULE-INDEX:START --> 与 <!-- DAO-MODULE-INDEX:END --> 之间）。
+// （位于 <!-- ZK-MODULE-INDEX:START --> 与 <!-- ZK-MODULE-INDEX:END --> 之间）。
 // 每个 vsix 模块链接到各自的 Release tag <key>-v<version> 与对应资产 —— 去心、按模块版本。
 // 环境: GITHUB_REPOSITORY=owner/repo (默认 Huo-zai-feng-lang-li/Antigravity-Injection)
 // 退出码 0=已写入（无论有无变化）；打印 "changed" 或 "nochange"。
@@ -11,8 +11,8 @@ const repoRoot = path.join(__dirname, "..");
 const reg = JSON.parse(fs.readFileSync(path.join(__dirname, "modules.json"), "utf8"));
 const REPO = process.env.GITHUB_REPOSITORY || "Huo-zai-feng-lang-li/Antigravity-Injection";
 const README = path.join(repoRoot, "README.md");
-const START = "<!-- DAO-MODULE-INDEX:START -->";
-const END = "<!-- DAO-MODULE-INDEX:END -->";
+const START = "<!-- ZK-MODULE-INDEX:START -->";
+const END = "<!-- ZK-MODULE-INDEX:END -->";
 
 function moduleVersion(m) {
   return JSON.parse(fs.readFileSync(path.join(repoRoot, m.dir, "package.json"), "utf8")).version;
@@ -32,7 +32,7 @@ function build() {
   lines.push("| 插件 | 版本 | 扩展 id | 说明 | Release / 下载 |");
   lines.push("|---|---|---|---|---|");
   for (const m of reg.modules) {
-    if (m.key === "dao-proxy-pro") lines.push(row(m));
+    if (m.key === "zk-proxy-pro") lines.push(row(m));
   }
   return lines.join("\n");
 }

@@ -31,11 +31,11 @@
 - 修复后专项测试：`2 passed / 0 failed`。
 - 3 个修改 JS 文件 `node --check` 退出 `0`。
 - `npm run test:quick`：`303 passed / 0 failed`。
-- 已生成 `dist/dao-proxy-pro-9.9.340.vsix`，包内版本和两条 marker 修复均已回读确认。
+- 已生成 `dist/zk-proxy-pro-9.9.340.vsix`，包内版本和两条 marker 修复均已回读确认。
 - VSIX SHA-256：`D5FCF23E896278D863689FD9D47959BCD1BEA914AB47BBF07E0500512E813E1B`。
 - Antigravity 实际安装与 9000 新会话标题验证由用户手动验收，当前不宣称运行时已通过。
 - 9.9.340 运行态复现：CDP 新建会话发送“分析项目提示词”，新标题仍为 `Analyzing Project Prompt Engineering`；8937 tape 记录 `rid=863`、`GEMINI_REST_CHAT`、`transformed=false`，标题指令位于 `request.contents[4].parts[0].text`。
 - 9.9.341 TDD 红灯：真实请求体用例先报 `modifyGeminiRestSP is not a function`，补齐测试导出后按行为失败，英文 `Should be title-cased` 原样保留；实现后专项测试 `3 passed / 0 failed`，日志显示 `gemini_title_instruction before=532B → after=460B`。
 - 9.9.342 TDD 红灯：将用例恢复为真实 `request.contents[]` 包装后，Pro 专项测试 `2 passed / 1 failed`，日志为 `gemini_internal_passthrough`；Min 镜像加入同一用例后先因缺少测试导出失败。修复包装层扫描并同步 Min 后，专项测试 `4 passed / 0 failed`，两条实现均记录 `gemini_title_instruction before=532B → after=460B`。
-- 9.9.342 已构建并安装：VSIX `dist/dao-proxy-pro-9.9.342.vsix`，SHA-256 `DA8E3B427D35F8335BF59EBD41332C60219D6DDFC4B27C714E8518E3D01CEC0E`；安装目录回读版本 `9.9.342`，9000/8937 重启后 `/origin/ping.self_file` 指向该版本，`dao_loaded=true`、`req_total=162`。
+- 9.9.342 已构建并安装：VSIX `dist/zk-proxy-pro-9.9.342.vsix`，SHA-256 `DA8E3B427D35F8335BF59EBD41332C60219D6DDFC4B27C714E8518E3D01CEC0E`；安装目录回读版本 `9.9.342`，9000/8937 重启后 `/origin/ping.self_file` 指向该版本，`dao_loaded=true`、`req_total=162`。
 - 运行态验收：用户在同一 `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000` 链路确认新建会话历史标题已显示中文；CDP 页面发送中文标题测试请求成功得到回复，代理 tape 持续记录 `/v1internal:streamGenerateContent?alt=sse` 命中。未观察到本次修复引入的控制台错误；旧英文标题不回写。

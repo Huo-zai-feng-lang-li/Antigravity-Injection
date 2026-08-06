@@ -1,6 +1,6 @@
 name: Sync plugins to Release
 
-# 道自动 · 去心：按模块版本往 main 推码即可，本作业只构建并发布「真正改动的模块」。
+# ZK自动 · 去心：按模块版本往 main 推码即可，本作业只构建并发布「真正改动的模块」。
 # 每个模块发到各自的 tag <key>-v<version>（资产含各自的 VSIX），互不干扰（改谁发谁，老的不动）。
 # 末尾据各模块当前版本自动维护 README 下载索引。权限内 GITHUB_TOKEN，跑在 GitHub 原生环境。
 # 单一事实来源 = tools/modules.json（detect / notes / index 三者都读它）。
@@ -137,7 +137,7 @@ jobs:
           set -e
           node tools/bundle-notes.js > bundle-notes.md
           TAG="all-in-one"
-          TITLE="dao-proxy-pro 插件 + 源代码 合一 · Antigravity Injection"
+          TITLE="zk-proxy-pro 插件 + 源代码 合一 · Antigravity Injection"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release delete "$TAG" --cleanup-tag --yes
           fi

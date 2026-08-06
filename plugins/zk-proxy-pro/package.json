@@ -1,0 +1,195 @@
+{
+  "name": "zk-proxy-pro",
+  "displayName": "ZKAgent Pro · 外接API · 反者ZK之动",
+  "description": "Antigravity 提示词反代 + 外接 API：自定义提示词、渠ZK、路由、用量。完整历史见 CHANGELOG。",
+	"version": "9.9.342",
+  "publisher": "zk-agi",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection.git",
+    "directory": "plugins/zk-proxy-pro"
+  },
+  "homepage": "https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection",
+  "icon": "media/icon.png",
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "antigravity",
+    "windsurf",
+    "cascade",
+    "system-prompt",
+    "zk",
+    "proxy",
+    "外接api",
+    "third-party",
+    "BYOK",
+    "ZK",
+    "反代",
+    "pro"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "zk-proxy-pro runs in all workspaces"
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "zk-container",
+          "title": "ZKAgent Pro",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "zk-container": [
+        {
+          "id": "zk.essence",
+          "name": "提示词",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "wam.originInvert",
+        "title": "ZKAgent Pro: 启 (invert · ZK前置 · 彻删官方着相)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "wam.originPassthrough",
+        "title": "官方Agent: 启 (passthrough · 锚归云 · 直连)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.toggleMode",
+        "title": "ZKAgent Pro: 切换模式 (ZK ⇄ 官方)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.openPreview",
+        "title": "ZKAgent Pro: 浏览器观真 SP (/origin/preview)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "wam.verifyEndToEnd",
+        "title": "全链路自检 (E2E)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "wam.selftest",
+        "title": "闭环自检 (L1 + L2)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.外接api.toggle",
+        "title": "ZKAgent Pro: 外接 api 开关 (第三方API路由 · 默开)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.eaConfig",
+        "title": "ZKAgent Pro: 外接API 热配置 (Provider+路由 · 不重启)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.restoreOfficial",
+        "title": "ZKAgent Pro: 复原官方直连 (卸载善后/解锚 · 卡死自救)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.term.exec",
+        "title": "ZKAgent Pro: 终端会话池 · exec (七层一招治 · 零第三方)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.term.list",
+        "title": "ZKAgent Pro: 终端会话池 · list (列所有 sid · 终端池状)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.term.close",
+        "title": "ZKAgent Pro: 终端会话池 · close (选 sid 关 · 释 shell 进程)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.modelUnlock.toggle",
+        "title": "ZKAgent Pro: 模型解锁 开关 (执大象天下往 · 全量109模型注入)",
+        "category": "ZKAgent Pro"
+      },
+      {
+        "command": "zk.modelUnlock.status",
+        "title": "ZKAgent Pro: 模型解锁 状态 (查看全量模型目录)",
+        "category": "ZKAgent Pro"
+      }
+    ],
+    "configuration": {
+      "title": "ZKAgent Pro",
+      "properties": {
+        "zk.origin.port": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "源.js 反代端口 (0=自动 per-user FNV-1a hash · 8889..8988 · 多账号自然隔离). 非0则覆盖."
+        },
+        "zk.origin.defaultMode": {
+          "type": "string",
+          "default": "invert",
+          "enum": [
+            "invert",
+            "passthrough",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "invert — ZKAgent · ZK直为前置 + 彻删官方一切着相之名 (身份/风格/规训) · 工具本身全保不动",
+            "passthrough — 官方Agent · 锚归云 · 直连",
+            "custom — 自定义SP · 用户编辑 _customSp.txt · 保留实时信息块"
+          ],
+          "description": "首激默模 (三态互斥 · 无off)"
+        },
+        "zk.origin.banner": {
+          "type": "boolean",
+          "default": false,
+          "description": "启动时显ZK横幅 (默认 false · 不言之教)"
+        },
+        "zk.外接api.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "外接第三方API路由 · Pro版默开 · 启后: zk_router 加载配置.json · 匹配modelUid → 第三方API · 不匹配 → 官方透传 · ZK并行而不相悖. 配 ~/.codeium/zk-byok/配置.json 填 provider+apiKey."
+        },
+        "zk.modelUnlock.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "模型解锁 · 执大象天下往 · 拦截GetUserSettings响应注入全量109模型目录 · 突破账号权限限制 · 前端显示所有模型"
+        }
+      }
+    }
+  },
+	"scripts": {
+		"test": "node vendor/外接api/core/zk-test.js",
+		"test:quick": "node vendor/外接api/core/zk-test.js --quick",
+		"test:ide-context": "node --test test/ide-context.test.js",
+		"test:title": "node --test --test-force-exit test/title-classifier.test.js",
+    "test:e2e": "node vendor/外接api/core/zk-test.js --e2e",
+    "test:protocol": "node vendor/外接api/core/zk-test.js --protocol",
+    "package": "vsce package --no-dependencies --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.84.0",
+    "@vscode/vsce": "^3.9.1"
+  }
+}

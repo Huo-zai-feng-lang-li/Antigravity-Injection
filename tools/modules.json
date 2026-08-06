@@ -2,13 +2,13 @@
   "_doc": "去心模块登记表 · 单一事实来源。detect-modules.js / release-notes.js / gen-readme-index.js / release.yml 均读此表。构建统一走 scripts/build-vsix.mjs <name>，产物落在 dist/<name>-<version>.vsix。",
   "modules": [
     {
-      "key": "dao-proxy-pro",
-      "name": "dao-proxy-pro",
-      "extId": "dao-agi.dao-proxy-pro",
-      "dir": "plugins/dao-proxy-pro",
-      "trigger": ["plugins/dao-proxy-pro"],
+      "key": "zk-proxy-pro",
+      "name": "zk-proxy-pro",
+      "extId": "zk-agi.zk-proxy-pro",
+      "dir": "plugins/zk-proxy-pro",
+      "trigger": ["plugins/zk-proxy-pro"],
       "kind": "vsix",
-      "title": "dao-proxy-pro · 反代换提示词 · 全功能版",
+      "title": "zk-proxy-pro · 反代换提示词 · 全功能版",
       "desc": "Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。"
     }
   ]

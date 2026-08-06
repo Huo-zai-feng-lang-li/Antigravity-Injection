@@ -1,6 +1,6 @@
 name: Auto-merge clean PRs
 
-# 道自动 · 无冲突的 PR 自动合并进 main，有冲突的留待人工裁决。
+# ZK自动 · 无冲突的 PR 自动合并进 main，有冲突的留待人工裁决。
 # 触发：PR 开/更新/重开/转就绪时自动判定；亦可手动 workflow_dispatch 扫描全部开着的 PR。
 
 on:

@@ -17,7 +17,7 @@ const TAG = "all-in-one";
 const VIDEOS = [
   {
     bv: "BV1Cdjn6VEhF",
-    title: "windsurf 完美外接第三方模型 · 满足一切暗黑需求（dao-proxy-pro）",
+    title: "windsurf 完美外接第三方模型 · 满足一切暗黑需求（zk-proxy-pro）",
   },
   {
     bv: "BV1sY9sBLE5M",
@@ -39,10 +39,10 @@ function dl(m) {
 }
 
 const out = [];
-out.push("# Antigravity Injection · 道法自然 — 插件 + 源代码");
+out.push("# Antigravity Injection · ZK法自然 — 插件 + 源代码");
 out.push("");
 out.push(
-  "> **一处看全**：本 Release 包含 **dao-proxy-pro 插件 VSIX + 完整源代码**，单一入口、随主线刷新。下载即用、读码即见。",
+  "> **一处看全**：本 Release 包含 **zk-proxy-pro 插件 VSIX + 完整源代码**，单一入口、随主线刷新。下载即用、读码即见。",
 );
 out.push("");
 out.push("## 🎬 视频介绍");
@@ -74,14 +74,14 @@ out.push(
     "/Antigravity-Injection-source.zip)（与本版本一致的快照，含插件全部源码 + 构建/发版脚本）。",
 );
 out.push(
-  "- 插件源码位于 `plugins/dao-proxy-pro`；构建脚本 `scripts/build-vsix.mjs` 可一键复现 VSIX。",
+  "- 插件源码位于 `plugins/zk-proxy-pro`；构建脚本 `scripts/build-vsix.mjs` 可一键复现 VSIX。",
 );
 out.push("");
 out.push("## 🚀 安装");
 out.push("");
 out.push("```bash");
 out.push("# 下载对应 .vsix 后：");
-out.push("code --install-extension dao-proxy-pro-*.vsix --force");
+out.push("code --install-extension zk-proxy-pro-*.vsix --force");
 out.push("# 或在 VS Code / Windsurf / Antigravity 中：Extensions: Install from VSIX...");
 out.push("```");
 out.push("");
@@ -90,6 +90,6 @@ out.push(
 );
 out.push("");
 out.push(
-  "损之又损，以至于无为 · 无为而无不为 · 水善利万物而有静 · **道法自然**",
+  "损之又损，以至于无为 · 无为而无不为 · 水善利万物而有静 · **ZK法自然**",
 );
 process.stdout.write(out.join("\n") + "\n");

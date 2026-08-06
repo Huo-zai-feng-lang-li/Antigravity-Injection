@@ -19,8 +19,8 @@
 
 | 模块路径 | 名称 / ID | 核心职责 |
 |---|---|---|
-| `plugins/dao-proxy-pro/` | `dao-agi.dao-proxy-pro` | **核心全功能反代**：接管 System Prompt、支持外接 API 路由、109 模型目录解锁、ACP stdio 代理及卸载还原。 |
-| `plugins/dao-proxy-min/` | `dao-agi.dao-proxy-min` | **精简示范反代**：同构剥离版，只保留提示词反转与代理，与 Pro 同构同版本镜像。 |
+| `plugins/zk-proxy-pro/` | `zk-agi.zk-proxy-pro` | **核心全功能反代**：接管 System Prompt、支持外接 API 路由、109 模型目录解锁、ACP stdio 代理及卸载还原。 |
+| `plugins/zk-proxy-min/` | `zk-agi.zk-proxy-min` | **精简示范反代**：同构剥离版，只保留提示词反转与代理，与 Pro 同构同版本镜像。 |
 | `plugins/rt-flow/` | `devaid.rt-flow` | **WAM 账号调度管理器**：账号池、自动切号、额度检测、对话追踪与 `.pb` 对话备份。 |
 | `tools/` | 发版与校验工具集 | `gen-readme-index.js`（自动维护 README 索引）、`bundle-notes.js`、`release-notes.js`、`checks/antigravity-target-check.js`。 |
 | `scripts/` | 构建脚本 | `build-vsix.mjs`（使用 Node.js 一键打包插件到 `dist/`）。 |
@@ -30,8 +30,8 @@
 ## 2. 版本控制与同步规范
 
 ### 2.1 版本单一信源 (Single Source of Truth)
-- **`dao-proxy-pro`**：版本单一信源位于 `plugins/dao-proxy-pro/package.json` 中的 `version` 字段，且与 `extension.js` 中的 `const VERSION` 必须完全一致。
-- **`dao-proxy-min`**：为 Pro 的轻量同构镜像，每次更新 Pro 修复时，必须同步检查 Min 中相对应位置的代码，保证逻辑不产生逻辑漂移。
+- **`zk-proxy-pro`**：版本单一信源位于 `plugins/zk-proxy-pro/package.json` 中的 `version` 字段，且与 `extension.js` 中的 `const VERSION` 必须完全一致。
+- **`zk-proxy-min`**：为 Pro 的轻量同构镜像，每次更新 Pro 修复时，必须同步检查 Min 中相对应位置的代码，保证逻辑不产生逻辑漂移。
 - **`rt-flow`**：版本单一信源位于 `plugins/rt-flow/package.json` 和 `plugins/rt-flow/extension.js`。
 
 ### 2.2 仓库与 Remote 地址规范
@@ -41,7 +41,7 @@
   ```bash
   node tools/gen-readme-index.js
   ```
-  以自动更新主 `README.md` 中的 `DAO-MODULE-INDEX` 区块。
+  以自动更新主 `README.md` 中的 `ZK-MODULE-INDEX` 区块。
 
 ### 2.3 发布迭代文档维护规约 (Release Notes Policy)
 - **版本号递增强制要求**：只要任务涉及版本号递增（如 Bug 修复迭代、功能新增发版），必须同步维护更新根目录的 **`RELEASE_NOTES.md`** 及对应模块的 `CHANGELOG.md`。
@@ -64,7 +64,7 @@
 - 代理注入 `settings.json`（如 `codeium.apiServerUrl` / `externalLanguageServerAddress`）时，必须使用结构化正则或注释保留解析器，**严禁直接使用普通的 `JSON.stringify(JSON.parse(...))` 覆盖保存**，否则会导致用户配置中的 JSONC 注释全部丢失。
 
 ### 3.3 卸载与 Fail-Safe 规则
-- 扩展卸载 (`deactivate`) 或用户切回官方模式时，必须触发清锚逻辑（`dao.restoreOfficial` / `dao-reset.ps1`），彻底清理环变与代理端口，确保 IDE 可以零残留退回官方直连模式。
+- 扩展卸载 (`deactivate`) 或用户切回官方模式时，必须触发清锚逻辑（`zk.restoreOfficial` / `zk-reset.ps1`），彻底清理环变与代理端口，确保 IDE 可以零残留退回官方直连模式。
 
 ---
 
@@ -86,17 +86,17 @@
 - [ ] **1. 逻辑校验与 Check**：
   在命令行执行语法检查与自动化自检：
   ```bash
-  node --check plugins/dao-proxy-pro/extension.js
-  node --check plugins/dao-proxy-pro/vendor/外接api/core/sp_invert.js
+  node --check plugins/zk-proxy-pro/extension.js
+  node --check plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js
   node tools/checks/antigravity-target-check.js
   ```
 - [ ] **2. 单元与回归测试**：
   ```bash
-  npm --prefix plugins/dao-proxy-pro run test:quick
+  npm --prefix plugins/zk-proxy-pro run test:quick
   ```
 - [ ] **3. VSIX 打包测试**：
   ```bash
-  node scripts/build-vsix.mjs dao-proxy-pro
+  node scripts/build-vsix.mjs zk-proxy-pro
   ```
   确认打包退出码为 `0` 且在 `dist/` 目录下成功生成 `.vsix` 文件。
 - [ ] **4. README 索引同步**：
