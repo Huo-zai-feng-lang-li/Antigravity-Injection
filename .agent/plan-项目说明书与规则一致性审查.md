@@ -34,6 +34,13 @@
 - 当前仓库只有 `zk-proxy-pro`；规则文档中列出的 Min、rt-flow、109 模型和 `const VERSION` 双信源均已漂移。
 - 普通 `deactivate`、真卸载和手动 `zk.restoreOfficial` 的清理语义不同，不能合并描述为每次都彻底清锚。
 
+### 用户最新 README 复核
+
+- 新 Mermaid 双链路图和标题泳道已消除旧图的 `109`、双锚和“ACP 主对话”错误，主链路描述基本对应代码。
+- 新能力矩阵图片仍引用外链，但视觉上已改为事实矩阵；Markdown 表格中 JSONC 入口应为 `extension.js`，模型目录合并入口应为 `bundled-origin/source.js`，标题入口应同时包含 `source.js` 与 `sp_invert.js`。
+- 标题泳道“返回中文标题”属于结果保证过度；代码只改写标题提示词，不硬校验模型最终输出字数或语言。
+- `.agent/rules/README.md` 当前仍保留不存在模块、109 模型、`const VERSION`、Node 18、错误路径和过宽 Fail-Safe 描述。
+
 ## 完成标准
 
 - 每项结论附具体代码路径、行号或运行结果。

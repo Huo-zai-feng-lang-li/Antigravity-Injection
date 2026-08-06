@@ -26,6 +26,9 @@
 ## 🎨 架构图表与工程事实矩阵
 
 ### 1. 双链路事实架构图 (Clear & High-Contrast Architecture)
+
+![Antigravity 双链路架构请求流转桑基图](https://mdn.alipayobjects.com/one_clip/afts/img/XakyTb0UaJcAAAAASVAAAAgAoEACAQFr/original)
+
 ```mermaid
 flowchart TD
     subgraph Client["💻 Antigravity IDE 客户端层"]
@@ -91,6 +94,9 @@ flowchart TD
 ---
 
 ### 2. 语言服务器标题改写与 Fail-Safe 细节泳道图 (Swimlane Protocol)
+
+![语言服务器标题改写与 Fail-Safe 细节流转图](https://mdn.alipayobjects.com/one_clip/afts/img/ySDBTqBMNjEAAAAASSAAAAgAoEACAQFr/original)
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -128,7 +134,7 @@ sequenceDiagram
 
 ### 3. .mcp 高阶协议工具路由流转图 (MCP Tool Protocol & Pure Prompt Pipeline)
 
-![Antigravity MCP 协议流转桑基图](https://mdn.alipayobjects.com/one_clip/afts/img/1dpdRLFZ7hQAAAAAROAAAAgAoEACAQFr/original)
+![Antigravity MCP 协议流转桑基图](https://mdn.alipayobjects.com/one_clip/afts/img/JIfnT6-pSTEAAAAAR-AAAAgAoEACAQFr/original)
 
 ```mermaid
 flowchart TD
@@ -182,17 +188,25 @@ flowchart TD
 
 ### 4. 核心能力事实矩阵 (Engineering Capability Matrix)
 
-![核心能力事实矩阵图](https://mdn.alipayobjects.com/one_clip/afts/img/zspBT7pzagcAAAAAT4AAAAgAoEACAQFr/original)
+![核心能力事实矩阵电子表格图](https://mdn.alipayobjects.com/one_clip/afts/img/q4jdSIwYnaAAAAAAS3AAAAgAoEACAQFr/original)
+
+![工程核心能力树状分布图](https://mdn.alipayobjects.com/one_clip/afts/img/h9ZdRrXjXXEAAAAARYAAAAgAoEACAQFr/original)
 
 | 核心能力 | 代码入口 | 生效条件 | 证据边界 |
 | :--- | :--- | :--- | :--- |
 | **`🟢 [已实现]` System Prompt 替换** | `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js` | `SP_MODE=invert` && (Connect-RPC/Gemini REST 主对话) | 仅在主对话路径替换 systemInstruction / prompt 锚点 |
-| **`🟡 [条件生效]` 标题提示词替换** | `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js` | 检测到 `Generate a short conversation title` 请求 | 只替换首行规范，保留第二行协议，模型字数靠提示词约束 |
+| **`🟡 [条件生效]` 标题提示词替换** | `plugins/zk-proxy-pro/vendor/bundled-origin/source.js + sp_invert.js` | 检测到 `Generate a short conversation title` 请求 | 只替换首行规范，保留第二行协议，模型字数靠提示词约束 |
 | **`🟡 [条件生效]` LS 参数改写** | `plugins/zk-proxy-pro/extension.js` | 本地 HTTP 代理健康检查 200 OK | 代理异常时清除锚点回归官方直连 (Fail-Safe) |
 | **`🟡 [条件生效]` BYOK 路由** | `plugins/zk-proxy-pro/vendor/外接api/runtime.js` | 配置匹配 `CHAT_PROTO` / `CHAT_RAW` 路由 | 仅覆盖配置命中的 Connect-RPC，Gemini REST 走官方 Cloud Code |
-| **`🟢 [已实现]` 模型目录响应合并** | `plugins/zk-proxy-pro/vendor/外接api/runtime.js` | 响应层匹配模型目录接口 | 只解锁前端目录可见性与 `disabled=false`，不等于上游实际调用权限 |
-| **`🟢 [已实现]` JSONC 注释保留** | `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js` | 解析 `settings.json` / JSONC 格式配置 | 基于正则剥离与 JSON 解析，保留配置文件中的注释说明 |
+| **`🟢 [已实现]` 模型目录响应合并** | `plugins/zk-proxy-pro/vendor/bundled-origin/source.js + runtime.js` | 响应层匹配模型目录接口 | 只解锁前端目录可见性与 `disabled=false`，不等于上游实际调用权限 |
+| **`🟢 [已实现]` JSONC 注释保留** | `plugins/zk-proxy-pro/extension.js` | 解析 `settings.json` / JSONC 格式配置 | 基于正则剥离与 JSON 解析，保留配置文件中的注释说明 |
 | **`🔵 [仅透传]` Fail-Safe 官方直连** | `plugins/zk-proxy-pro/extension.js` | 代理服务断开或未在端口响应 | 进程 Hook 不改写参数，自动降级为官方直接传输 |
+
+---
+
+### 5. zk-proxy-pro 架构综合能力五维评估 (Architecture Capability Radar)
+
+![zk-proxy-pro 与原生直连五维雷达评估图](https://mdn.alipayobjects.com/one_clip/afts/img/bCyiSI1iEawAAAAAUMAAAAgAoEACAQFr/original)
 
 ---
 
