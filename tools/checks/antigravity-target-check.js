@@ -761,7 +761,7 @@ function assertLsMainBridgePortRuntime(file) {
     },
     path,
     process: { pid: 1234 },
-    PKG_VERSION: "9.9.501",
+    PKG_VERSION: "9.9.504",
   };
   vm.createContext(sandbox);
   vm.runInContext(
@@ -1036,3 +1036,4 @@ if (fs.existsSync(path.join(__dirname, "../..", proVsix))) {
 }
 
 console.log("antigravity-target-check ok");
+process.exit(0);

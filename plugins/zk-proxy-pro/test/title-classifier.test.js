@@ -65,3 +65,8 @@ for (const [name, modulePath] of restImplementations) {
     assert.doesNotMatch(rewritten, /Should be title-cased/);
   });
 }
+
+test.after(() => {
+  setTimeout(() => process.exit(0), 100);
+});
+
