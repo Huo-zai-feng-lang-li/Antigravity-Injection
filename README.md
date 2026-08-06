@@ -34,33 +34,43 @@
 ### 3. 高阶 Mermaid 链路流转图
 ```mermaid
 flowchart TD
-    IDE["Antigravity-1.20.6.exe"]
-    PROXY["zk-proxy-pro 代理中枢"]
-    SUB_SP["System Prompt 逆转/注入引擎"]
-    SUB_LS["Language Server 中文标题注入"]
-    ANCHOR["TAO_TURN/SUB 记忆双锚点"]
-    TITLE_ZH["8-18字 简体中文标题生成"]
-    API_POOL["109 全量模型池 / BYOK"]
-
-    IDE -->|gRPC / HTTP 请求| PROXY
-    PROXY -->|请求拆包 & 重写| SUB_SP
-    PROXY -->|stdio ACP 拦截| SUB_LS
+    IDE[["💻 Antigravity-1.20.6.exe"]]
+    PROXY{{"⚡ zk-proxy-pro 代理中枢"}}
     
-    SUB_SP -->|双锚点保护| ANCHOR
-    SUB_LS -->|TITLE_ONLY_ZH_SP| TITLE_ZH
+    SUB_SP["🔥 System Prompt 逆转与注入"]
+    SUB_LS["🌸 Language Server 中文标题注入"]
     
-    ANCHOR -->|全量特征发往| API_POOL
-    TITLE_ZH -->|自动更新历史| IDE
+    ANCHOR[("🛡️ TAO_TURN / SUB 记忆双锚点")]
+    TITLE_ZH[("📝 8-18字 简体中文标题生成器")]
+    
+    API_POOL[["🚀 109 全量模型池 & BYOK 网关"]]
 
-    classDef client fill:#1f2937,stroke:#58a6ff,stroke-width:2px,color:#fff;
-    classDef proxy fill:#0d1117,stroke:#bc8cff,stroke-width:3px,color:#fff;
-    classDef engine fill:#161b22,stroke:#3fb950,stroke-width:2px,color:#fff;
-    classDef api fill:#21262d,stroke:#f0883e,stroke-width:2px,color:#fff;
+    IDE ==>|1. gRPC / HTTP 原始请求| PROXY
+    PROXY ==>|2. 拆包 & 提取 Prompt| SUB_SP
+    PROXY ==>|3. stdio ACP 管道拦截| SUB_LS
+    
+    SUB_SP -->|4. 注入 System Prompt| ANCHOR
+    SUB_LS -->|5. 注入 TITLE_ONLY_ZH_SP| TITLE_ZH
+    
+    ANCHOR ==>|6. 发送至云端 API| API_POOL
+    TITLE_ZH -->|7. 实时更新侧边栏| IDE
 
-    class IDE client;
-    class PROXY proxy;
-    class SUB_SP,SUB_LS,ANCHOR,TITLE_ZH engine;
-    class API_POOL api;
+    %% 绚丽彩色样式声明
+    classDef styleIDE fill:#0d3b66,stroke:#4cc9f0,stroke-width:3px,color:#ffffff,font-weight:bold;
+    classDef styleProxy fill:#3a0ca3,stroke:#7209b7,stroke-width:3px,color:#ffffff,font-weight:bold;
+    classDef styleSP fill:#065f46,stroke:#10b981,stroke-width:2px,color:#ffffff;
+    classDef styleLS fill:#831843,stroke:#f43f5e,stroke-width:2px,color:#ffffff;
+    classDef styleAnchor fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
+    classDef styleTitle fill:#701a75,stroke:#d946ef,stroke-width:2px,color:#ffffff;
+    classDef styleAPI fill:#1e1b4b,stroke:#6366f1,stroke-width:3px,color:#ffffff,font-weight:bold;
+
+    class IDE styleIDE;
+    class PROXY styleProxy;
+    class SUB_SP styleSP;
+    class SUB_LS styleLS;
+    class ANCHOR styleAnchor;
+    class TITLE_ZH styleTitle;
+    class API_POOL styleAPI;
 ```
 
 ---
