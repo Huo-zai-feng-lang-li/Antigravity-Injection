@@ -1,6 +1,6 @@
 # Antigravity-Injection · 反重力 IDE 提示词注入与增强套件
 
-这是一个专为 **Antigravity IDE**（完美支持 `Antigravity-1.20.6.exe` 等全系版本）及 VS Code 生态打造的系统提示词注入与语言服务器中文化增强插件套件。
+这是一个专为 **Antigravity IDE**（完美支持 `Antigravity-1.20.6.exe` 等版本）及生态打造的系统提示词注入与语言服务器中文化增强插件套件。
 
 通过拦截本地代理与语言服务器 (LSP / ACP stdio proxy)，无需修改 IDE 二进制即可无损接管全局系统提示词 (System Prompt)，并支持自动将 AI 对话标题转换为简体中文。
 
@@ -9,17 +9,27 @@
 ## 💡 核心功能
 
 1. **反重力 IDE 系统提示词注入 (System Prompt Inversion)**
-   - 接管官方全局系统提示词 (System Prompt)，支持自定义注入任意系统提示词。
-   - 剥离官方冗余约束与限制，释放 Agent 深度推理与全量代码生成能力。
+   - **机制原理**：通过在本地代理层（`sp_invert.js` / `source.js`）实时拦截与重写客户端发起的推理请求（gRPC/HTTP），接管官方硬编码的全局系统提示词 (System Prompt)。
+   - **功能特性**：剥离官方冗余约束与限制，支持自定义注入任意系统提示词；配合主路末锚 `TAO_TURN_ANCHOR` 与副路末锚 `TAO_SUB_ANCHOR` 保持长对话上下文不漂移。
 
-2. **语言服务器 (LSP / ACP) 提示词注入 & 中文对话标题**
-   - 拦截语言服务器 (`language_server`) 通讯及 ACP `devin.exe` stdio 代理。
-   - 将标题生成器 (Title Classifier) 提示词替换为简体中文规范，强制新建对话自动生成 **8~18 字的简体中文标题**。
+2. **语言服务器 (LSP / ACP) 中文标题提示词注入 (Chinese Title Prompt Injection)**
+   - **机制原理**：深度拦截语言服务器 (`language_server`) 通讯及 ACP `devin.exe` stdio 代理。
+   - **功能特性**：将标题生成器 (Title Classifier) 提示词替换为简体中文规范（`TITLE_ONLY_ZH_SP`），向语言服务器注入中文标题规则，强制新建对话自动生成 **8~18 字的简体中文标题**。
 
 3. **原生支持 Antigravity-1.20.6.exe**
    - 自动识别 Windows 平台的 `Antigravity-1.20.6.exe` 进程与配置路径。
    - 保留 `settings.json` 的 JSONC 注释格式，自动注入反代端口及语言服务器端点参数。
    - 内置 Fail-Safe 机制：若代理未就绪则自动无缝降级为官方直连，不影响 IDE 原生功能。
+
+---
+
+## 📐 架构流程图与思维导图 (MCP Generated)
+
+### 1. 提示词与语言服务器双轨注入流程图
+![双轨注入流程图](https://mdn.alipayobjects.com/one_clip/afts/img/aMpoSbsBewsAAAAARjAAAAgAoEACAQFr/original)
+
+### 2. 核心功能思维导图
+![核心功能思维导图](https://mdn.alipayobjects.com/one_clip/afts/img/74ZHTqq2KyAAAAAARTAAAAgAoEACAQFr/original)
 
 ---
 
@@ -79,9 +89,3 @@ node scripts/build-vsix.mjs zk-proxy-pro
 # 运行自动化目标离线断言测试
 node tools/checks/antigravity-target-check.js
 ```
-
----
-
-## 📄 许可证
-
-- 核心插件采用 **Apache-2.0** 许可证。
