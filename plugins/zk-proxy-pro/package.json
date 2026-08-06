@@ -2,7 +2,7 @@
   "name": "zk-proxy-pro",
   "displayName": "ZKAgent Pro · 外接API · 反者ZK之动",
   "description": "Antigravity 提示词反代 + 外接 API：自定义提示词、渠ZK、路由、用量。完整历史见 CHANGELOG。",
-	"version": "9.9.504",
+	"version": "9.9.505",
   "publisher": "zk-agi",
   "license": "Apache-2.0",
   "engines": {

@@ -47,6 +47,22 @@
 - **版本号递增强制要求**：只要任务涉及版本号递增（如 Bug 修复迭代、功能新增发版），必须同步维护更新根目录的 **`RELEASE_NOTES.md`** 及对应模块的 `CHANGELOG.md`。
 - **普通改动无需提交**：若任务不涉及版本号递增（例如重构代码、排查环境、修改规则或微调注释），则**严禁/无需修改提交** `RELEASE_NOTES.md`，避免无谓的版本变更噪声。
 
+### 2.4 全自动版本递增与发布闭环 (Automated Version Bump & Release Pipeline)
+- **全流程一键命令**：
+  在项目根目录运行 `npm run release` / `npm run bump`，或执行：
+  ```bash
+  node scripts/bump-version.mjs [patch|minor|major|<version>] ["变更说明文案"]
+  ```
+- **7 步原子化自动流水线**：
+  1. **版本更新**：自动更新 `plugins/zk-proxy-pro/package.json` 的 `version`；
+  2. **断言更新**：自动更新 `tools/checks/antigravity-target-check.js` 中的 `PKG_VERSION`；
+  3. **日志追加**：自动向 `plugins/zk-proxy-pro/CHANGELOG.md` 顶部插入规范版本日志；
+  4. **文档同步**：自动替换 `README.md` 中的版本号与 VSIX 下载链接；
+  5. **构建清理**：自动清理 `dist/` 旧 VSIX，并使用 `build-vsix.mjs` 打包最新 `.vsix` 产物；
+  6. **离线自检**：自动运行全量单元测试与 `antigravity-target-check.js` 校验断言；
+  7. **提交推送**：自动执行 `git add .` ➔ `git commit -m "chore(release)..."` ➔ `git push` 推送至远程仓库。
+- **强制规约**：只要用户指令包含“提交版本”、“递增版本”或“发布新包”，AI 助手必须优先使用该全自动脚本完成一键闭环，确保 `git push` 直达远程。
+
 ---
 
 ## 3. 提示词注入与 LSP/REST 拦截规则
