@@ -2,6 +2,8 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+v9.9.500 · 反重力架构图文重绘与全链路文档焕新版：①README 高阶架构体系重绘（双链路事实架构、标题改写细节泳道图、.mcp 协议路由流转图）；②调用 mcp_chart 动态生成并嵌入 MCP 协议流转桑基图；③全面修复 IDE 下 Mermaid 语法错误与渲染异常，采用高对比度极客色彩；④重新梳理工程能力事实矩阵，自检断言 100% 验证通过。
+
 v9.9.342 · 修复 9.9.341 的真实载荷层级遗漏：Antigravity 内部 Gemini REST 将生成参数包装在 `request.contents[]`，旧实现误扫根级 `contents[]`，导致标题规则未命中而只替换普通 `systemInstruction`。现兼容根级与 `request` 包装结构，并在 tape 中记录准确字段路径；同步 Min 镜像与真实包装请求回归。
 
 v9.9.341 · 修复 Antigravity 1.107.0 原生标题运行路径：真实标题指令位于 Gemini REST `contents[].parts[].text`，不是 `systemInstruction`；现仅重写第一行标题约束为简体中文，并完整保留第二行目标摘要协议。新增真实请求体回归，主聊天、摘要内容、路由与工具调用不变。
