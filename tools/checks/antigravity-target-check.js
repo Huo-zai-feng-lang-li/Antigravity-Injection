@@ -761,7 +761,7 @@ function assertLsMainBridgePortRuntime(file) {
     },
     path,
     process: { pid: 1234 },
-    PKG_VERSION: "9.9.500",
+    PKG_VERSION: "9.9.501",
   };
   vm.createContext(sandbox);
   vm.runInContext(
@@ -986,9 +986,9 @@ for (const file of [
 
 const proPkg = JSON.parse(read("plugins/zk-proxy-pro/package.json"));
 assertPackageVersion("plugins/zk-proxy-pro/package.json", proPkg.version);
-if (`${proPkg.publisher}.${proPkg.name}` !== "dao-agi.dao-proxy-pro") {
+if (`${proPkg.publisher}.${proPkg.name}` !== "zk-agi.zk-proxy-pro") {
   throw new Error(
-    "plugins/zk-proxy-pro/package.json: extension id must match the pre-LS bridge dao-agi.dao-proxy-pro",
+    "plugins/zk-proxy-pro/package.json: extension id must match zk-agi.zk-proxy-pro",
   );
 }
 if (read("plugins/zk-proxy-pro/vendor/bundled-origin/_origin_mode.txt").trim() !== "custom") {

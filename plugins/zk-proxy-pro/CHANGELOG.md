@@ -2,6 +2,8 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+v9.9.501 · zk-proxy-pro 标识符标准化与副路提示词逻辑修复：①package.json 与 antigravity-target-check.js 断言统一更新为 zk-agi.zk-proxy-pro 规范；②修复 custom 模式下非 chat 类型副路提示词（如 title）未降级委托给 _spInvertLib 的漏洞，保证标题等元数据拦截重写符合中文规范；③全量测试与 VSIX 构建校验 100% 通过。
+
 v9.9.500 · 反重力架构图文重绘与全链路文档焕新版：①README 高阶架构体系重绘（双链路事实架构、标题改写细节泳道图、.mcp 协议路由流转图）；②调用 mcp_chart 动态生成并嵌入 MCP 协议流转桑基图；③全面修复 IDE 下 Mermaid 语法错误与渲染异常，采用高对比度极客色彩；④重新梳理工程能力事实矩阵，自检断言 100% 验证通过。
 
 v9.9.342 · 修复 9.9.341 的真实载荷层级遗漏：Antigravity 内部 Gemini REST 将生成参数包装在 `request.contents[]`，旧实现误扫根级 `contents[]`，导致标题规则未命中而只替换普通 `systemInstruction`。现兼容根级与 `request` 包装结构，并在 tape 中记录准确字段路径；同步 Min 镜像与真实包装请求回归。

@@ -2232,7 +2232,9 @@ function invertAnySP(spText) {
     if (!s) return null;
     if (SP_MODE === "custom") {
       const t = _spInvertLib ? _spInvertLib.classifySPType(s) : null;
-      return t === "chat" ? _effectiveCustomSP() || null : null;
+      if (t === "chat") return _effectiveCustomSP() || null;
+      if (_spInvertLib) return _spInvertLib.invertAnySP(s);
+      return null;
     }
     // _customSP 仅 chat 路径生效 · ZK法自然 · 用户即ZK
     if (_customSP && _customSP.sp) {
