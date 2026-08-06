@@ -1,18 +1,22 @@
-# 最新接续状态 (2026-08-06 12:28)
+# 最新接续状态 (2026-08-06 16:32)
 
 ## 核心进展
-- 已使用 `mcp_chart` 全套工具（桑基图、树状图、电子表格图、细节流转图、雷达图）对 `README.md` 中的架构图、标题改写图、MCP 协议流转图、能力事实矩阵与五维评估雷达图进行重新设计与高清暗色渲染。
-- 图表外链为阿里 AFTS 静态 CDN（`mdn.alipayobjects.com`），永久公开有效。
-- 精确修正了 `README.md` 事实矩阵中标题替换、模型目录响应合并与 JSONC 保留的代码入口路径，与实际源码（`extension.js` / `source.js` / `sp_invert.js` / `runtime.js`）完全对齐。
-- 自动化离线断言脚本 `tools/checks/antigravity-target-check.js` 校验退出码 0，全绿通过。
-- 已重新打包生成最新的扩展文件：`dist/zk-proxy-pro-9.9.500.vsix`。
+- 已完成 `zk-proxy-pro` 插件自定义提示词注入逻辑与 LS Bridge 端口分发的全面修复，提示词模式收敛锁定为 `custom`，自动化断言校验 100% 递增提交（Commit: `c611787`）。
 
-## 关键文件与产物
-- 项目说明文件: `README.md`
-- 打包文件: `dist/zk-proxy-pro-9.9.500.vsix`
-- 断言脚本: `tools/checks/antigravity-target-check.js`
-- 记忆交接: `.agent/handoff.md`
+## 核心动机与背景 (Motivation & Background)
+- **提示词覆盖风险**：之前存在多模式组合导致在特定场景下退回官方默认提示词的问题，需要锁定为纯粹的 `custom` 模式并强制注入反重力规则。
+- **端口兼容性依赖**：前置/后置桥接组件分散寻找 `.zk` 和 `.dao` 目录下的端口文件，需要通过双目录广播打通兼容性。
+
+## 关键设计与实现 (Implementation & Decisions)
+- **提示词模式纯粹化**：在 `plugins/zk-proxy-pro/package.json` 和 `source.js` 中将默认模式设置为 `custom`，优化 `_effectiveCustomSP()` 与 `_geminiFallbackSystemText()` 拦截保护链。
+- **双目录端口广播**：在 `extension.js` 和 `source.js` 中的 `_publishPort()` 实现同时写入 `~/.zk/origin-port.json` 与 `~/.dao/origin-port.json`。
+- **静态规则打包解耦**：打包内置 `plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt`，保证无配置场景下亦有完整规则兜底。
+- **自动化离线校验断言**：在 `tools/checks/antigravity-target-check.js` 中新增针对端口双写、`SP_MODE` 逻辑分支及 `.vsix` 文件镜像的全面硬取证断言，全绿通过。
 
 ## 待办事项 (Next Steps)
-- [ ] 根据后续需求可选地将图表图片下载归档到本地 `docs/images/` 相对路径中。
-- [ ] 如需发布更新，可将新打包的 `.vsix` 上传至 GitHub Releases。
+- [ ] 执行 `/git-push` 将 commit `c611787` 推送到远程 GitHub 仓库。
+- [ ] 可选：如需发布新版本，执行 `vsce package` 或重新构建打包扩展。
+
+## 关键上下文
+- 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\反重力\Antigravity-Injection`
+- 主要文件: `plugins/zk-proxy-pro/vendor/bundled-origin/source.js`, `plugins/zk-proxy-pro/extension.js`, `tools/checks/antigravity-target-check.js`, `plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt`

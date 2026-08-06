@@ -30,7 +30,8 @@
 - `node --check`：`extension.js`、`source.js` 均通过。
 - `npm --prefix plugins/zk-proxy-pro run test:quick`：303 项通过，0 项失败。
 - `node tools/checks/antigravity-target-check.js`：退出码 0。
-- `node scripts/build-vsix.mjs zk-proxy-pro`：退出码 0，产物包含并校验 `_antigravity_rules.txt`。
+- `node scripts/build-vsix.mjs zk-proxy-pro`：退出码 0，生成 `dist/dao-proxy-pro-9.9.500.vsix`，产物身份为 `dao-agi.dao-proxy-pro`，并包含、校验 `_antigravity_rules.txt`。
+- 使用 Antigravity 当前真实 `dao-one-ls-agent-pro.cjs` 做隔离桥接仿真：返回 `http://127.0.0.1:8937`，证明主进程可发现修复后的扩展身份和代理。
 - 未修改或重启 `D:\Antigravity`；真实 IDE 注入由用户安装 VSIX 后验收。
 
 ## 完成标准
