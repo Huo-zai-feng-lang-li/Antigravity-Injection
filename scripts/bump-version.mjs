@@ -80,6 +80,20 @@ if (changelogContent.startsWith("# Changelog · zk-proxy-pro")) {
 }
 console.log(`✅ [3/7] 已追加 plugins/zk-proxy-pro/CHANGELOG.md 日志`);
 
+// 4.5. 更新 RELEASE_NOTES.md
+const releaseNotesPath = join(root, "RELEASE_NOTES.md");
+if (existsSync(releaseNotesPath)) {
+  let rn = readFileSync(releaseNotesPath, "utf-8");
+  rn = rn.replace(`| **\`zk-proxy-pro\`** | \`v${oldVersion}\``, `| **\`zk-proxy-pro\`** | \`v${newVersion}\``);
+  const rnHeader = "## 📜 版本发布与 Bug 修复迭代日志\n\n";
+  const newRnEntry = `### 🚀 v${newVersion} (2026-09-04)\n- **修复类型**：Bug 修复 (多轮对话上下文误伤修复) + 垃圾代码清理\n- **更新描述**：${customDesc}\n\n`;
+  if (rn.includes(rnHeader)) {
+    rn = rn.replace(rnHeader, rnHeader + newRnEntry);
+    writeFileSync(releaseNotesPath, rn, "utf-8");
+    console.log(`✅ [3.5/7] 已更新 RELEASE_NOTES.md`);
+  }
+}
+
 // 5. 更新 README.md
 let readmeContent = readFileSync(readmePath, "utf-8");
 readmeContent = readmeContent
@@ -103,7 +117,7 @@ execSync(`node scripts/build-vsix.mjs zk-proxy-pro`, { cwd: root, stdio: "inheri
 
 // 7. 全量自动化测试与断言自检
 console.log(`🧪 [6/7] 正在执行全量自动化测试与断言校验...`);
-execSync(`node --test plugins/zk-proxy-pro/test/title-classifier.test.js plugins/zk-proxy-pro/test/ide-context.test.js`, { cwd: root, stdio: "inherit" });
+execSync(`node --test plugins/zk-proxy-pro/test/title-classifier.test.js plugins/zk-proxy-pro/test/ide-context.test.js plugins/zk-proxy-pro/test/gemini-compat.test.js plugins/zk-proxy-pro/test/model-whitelist.test.js plugins/zk-proxy-pro/test/conv-summaries.test.js`, { cwd: root, stdio: "inherit" });
 execSync(`node tools/checks/antigravity-target-check.js`, { cwd: root, stdio: "inherit" });
 console.log(`🎉 离线测试与断言自检 100% 验证通过！`);
 

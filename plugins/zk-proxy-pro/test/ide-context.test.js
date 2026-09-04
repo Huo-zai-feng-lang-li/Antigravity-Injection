@@ -157,11 +157,23 @@ test("Gemini fails open byte-for-byte for unsafe structures", () => {
   }
 });
 
-test("Gemini does not duplicate a marker already present elsewhere in the request", () => {
+test("Gemini allows new turn to inject context even if earlier message contains marker", () => {
   const input = Buffer.from(JSON.stringify({
     contents: [
       { role: "user", parts: [{ text: `old\n${OPEN_MARKER}` }] },
       { role: "user", parts: [{ text: "latest" }] },
+    ],
+  }));
+  const result = injectGeminiBuffer(input, snapshot);
+  assert.equal(result.injected, true);
+  const parsed = JSON.parse(result.body.toString("utf8"));
+  assert.ok(parsed.contents[1].parts[0].text.includes("latest\n\n" + OPEN_MARKER));
+});
+
+test("Gemini does not duplicate marker if latest user message already has it", () => {
+  const input = Buffer.from(JSON.stringify({
+    contents: [
+      { role: "user", parts: [{ text: `latest\n${OPEN_MARKER}` }] },
     ],
   }));
   const result = injectGeminiBuffer(input, snapshot);
@@ -181,11 +193,14 @@ test("OpenAI messages append to last user string or last existing text part and 
   assert.equal(injectOpenAiMessages(messages, snapshot).injected, false);
 });
 
-test("OpenAI messages do not duplicate a marker in an earlier content part", () => {
-  const messages = [{ role: "user", content: [
-    { type: "text", text: `earlier\n${OPEN_MARKER}` },
-    { type: "text", text: "latest" },
-  ] }];
-  assert.equal(injectOpenAiMessages(messages, snapshot).injected, false);
-  assert.equal(messages[0].content[1].text, "latest");
+test("OpenAI messages allow new turn to inject context even if earlier message contains marker", () => {
+  const messages = [
+    { role: "user", content: `earlier\n${OPEN_MARKER}` },
+    { role: "assistant", content: "ok" },
+    { role: "user", content: "latest" },
+  ];
+  const res = injectOpenAiMessages(messages, snapshot);
+  assert.equal(res.injected, true);
+  assert.ok(messages[2].content.includes(OPEN_MARKER));
 });
+

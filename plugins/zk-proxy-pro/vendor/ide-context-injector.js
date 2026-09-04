@@ -7,12 +7,6 @@ function contextBlock(snapshot) {
   return `${OPEN_MARKER}\n${JSON.stringify(snapshot)}\n${CLOSE_MARKER}`;
 }
 
-function containsMarker(value, seen = new WeakSet()) {
-  if (typeof value === "string") return value.includes(OPEN_MARKER);
-  if (!value || typeof value !== "object" || seen.has(value)) return false;
-  seen.add(value);
-  return Object.values(value).some((item) => containsMarker(item, seen));
-}
 
 function appendText(target, key, snapshot) {
   const text = target && target[key];
@@ -23,7 +17,6 @@ function appendText(target, key, snapshot) {
 
 function injectGeminiObject(obj, snapshot) {
   if (!obj || typeof obj !== "object") return false;
-  if (containsMarker(obj)) return false;
   const queue = [obj];
   let target = null;
   while (queue.length) {
@@ -58,7 +51,7 @@ function injectGeminiBuffer(body, snapshot) {
 
 function injectOpenAiMessages(messages, snapshot) {
   if (!Array.isArray(messages)) return { messages, injected: false };
-  if (containsMarker(messages)) return { messages, injected: false };
+
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
     if (!message || message.role !== "user") continue;

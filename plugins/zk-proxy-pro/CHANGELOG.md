@@ -1,5 +1,11 @@
 # Changelog · zk-proxy-pro
 
+> 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
+
+v9.9.526 · 修复多轮会话IDE上下文注入误伤bug，清理无用死代码
+
+# Changelog · zk-proxy-pro
+
 > 完整版本历史。
 
 ## v9.9.525 · 插件名统一为 zk-proxy-pro · 移除 dao 命名
