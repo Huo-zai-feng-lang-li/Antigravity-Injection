@@ -121,13 +121,13 @@ const PKG_VERSION = (() => {
   }
 })();
 // v9.9.25 · 软编码归一 · 二十八章「朴散为器·圣人用则为官长·夫大制无割」
-// 病: zk-agi.zk-proxy-min 字面散写 4 处 (扫描自身目录 / .obsolete 标 / uninstallExtension 参)
+// 病: zk-agent.zk-proxy-min 字面散写 4 处 (扫描自身目录 / .obsolete 标 / uninstallExtension 参)
 // 治: 抽自 package.json 之 publisher + name · 一处定义 · 全文一致 · 适所有用户/所有 fork
 const PKG_PUBLISHER = (() => {
   try {
     return require("./package.json").publisher;
   } catch {
-    return "zk-agi";
+    return "zk-agent";
   }
 })();
 const PKG_NAME = (() => {
@@ -137,8 +137,8 @@ const PKG_NAME = (() => {
     return "zk-proxy-pro";
   }
 })();
-const SELF_EXT_ID = `${PKG_PUBLISHER}.${PKG_NAME}`; // "zk-agi.zk-proxy-min"
-const SELF_EXT_DIR_PREFIX = `${SELF_EXT_ID}-`; // "zk-agi.zk-proxy-min-"
+const SELF_EXT_ID = `${PKG_PUBLISHER}.${PKG_NAME}`; // "zk-agent.zk-proxy-min"
+const SELF_EXT_DIR_PREFIX = `${SELF_EXT_ID}-`; // "zk-agent.zk-proxy-min-"
 const _SELF_ESC = SELF_EXT_ID.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const SELF_EXT_DIR_REGEX = new RegExp("^" + _SELF_ESC + "-");
 const SELF_EXT_VER_REGEX = new RegExp(
@@ -555,7 +555,7 @@ let _proxyHandle = null; // start() 返回的 handle: { server, port, host, clos
 // v9.9.21 · 唯变所适 · 软编码归宗 · 二十五章「逝曰远 远曰反」· 二十二章「曲则金」
 // 病: 旧版 vendorDir 锚死 __dirname/vendor/bundled-origin · 多 ext-host 共存 +
 //     旧 ext-host watchdog 复活 → 永走旧版 source.js · self_file 锁死旧目录
-// 药: 扫所有 ~/.antigravity/extensions/zk-agi.zk-proxy-min-*/ · 按 semver 选最新版
+// 药: 扫所有 ~/.antigravity/extensions/zk-agent.zk-proxy-min-*/ · 按 semver 选最新版
 //     即旧 ext-host (旧 extension.js · 旧 vendorDir) 也从此药受惠 (新装 vsix 后)
 //     · 至少新 ext-host 之 require 永走最新源 · 自显新ZK
 //     注: 旧 extension.js 不会调本新 vendorDir · 唯靠 EADDRINUSE 让位机制兼治
@@ -777,6 +777,9 @@ async function proxyStart(port, mode, _retried, _altAttempts) {
     _proxyHealthy = true;
     _cachedProxyUrl = `http://127.0.0.1:${_cachedPort}`;
     _publishPort(_cachedPort);
+    // ★ v9.9.522 · 自动模型解锁 · 代理启动后调 /origin/model_unlock · 幂等
+    //   三十七章「侯王若能守之 万物将自化」· 解「装后仅 SWE1.6」之疾
+    autoModelUnlock(_cachedPort);
     L.info(
       "proxy",
       `started :${_proxyHandle.port} src=${srcPath} mode=${_proxyHandle.getMode()} · healthy`,
@@ -2535,96 +2538,6 @@ async function cmdTermClose() {
   );
 }
 
-// ★ v9.9.260 · 模型解锁命令 · 执大象 天下往
-async function cmdModelUnlockToggle() {
-  const port = _cachedPort;
-  if (!port) {
-    vscode.window.showErrorMessage(
-      "ZKAgent Pro: 反代未运行 · 无法切换模型解锁",
-    );
-    return;
-  }
-  try {
-    // GET current status
-    const status = await httpGetJson(
-      `http://127.0.0.1:${port}/origin/model_unlock`,
-      2000,
-    );
-    const current = status && status.enabled !== false;
-    const next = !current;
-    // POST toggle
-    const result = await httpPostJson(
-      `http://127.0.0.1:${port}/origin/model_unlock`,
-      { enabled: next },
-      2000,
-    );
-    if (result && result.ok) {
-      vscode.window.showInformationMessage(
-        `模型解锁: ${next ? "✅ 启用" : "❌ 禁用"} (${result.catalog_size || 0} 模型) · 执大象 天下往`,
-      );
-    } else {
-      vscode.window.showErrorMessage(
-        `模型解锁切换失败: ${(result && result.error) || "unknown"}`,
-      );
-    }
-  } catch (e) {
-    vscode.window.showErrorMessage(`模型解锁切换失败: ${e.message}`);
-  }
-}
-
-async function cmdModelUnlockStatus() {
-  const port = _cachedPort;
-  if (!port) {
-    vscode.window.showErrorMessage(
-      "ZKAgent Pro: 反代未运行 · 无法查看模型状态",
-    );
-    return;
-  }
-  try {
-    const catalog = await httpGetJson(
-      `http://127.0.0.1:${port}/origin/model_catalog`,
-      3000,
-    );
-    if (!catalog || !catalog.ok) {
-      vscode.window.showErrorMessage(
-        `模型目录加载失败: ${(catalog && catalog.error) || "unknown"}`,
-      );
-      return;
-    }
-    const models = catalog.models || [];
-    const providers = {};
-    for (const m of models) {
-      const p = m.provider || "unknown";
-      if (!providers[p]) providers[p] = [];
-      providers[p].push(m);
-    }
-    // Show quick pick with model list
-    const items = [];
-    for (const [prov, mods] of Object.entries(providers).sort()) {
-      items.push({
-        label: `── ${prov} (${mods.length}) ──`,
-        kind: vscode.QuickPickItemKind.Separator,
-      });
-      for (const m of mods) {
-        const badges = [];
-        if (m.isRecommended) badges.push("★");
-        if (m.isNew) badges.push("🆕");
-        items.push({
-          label: `${badges.join("")} ${m.label}`,
-          description: `${m.creditMultiplier || "?"}x`,
-          detail: m.modelUid,
-        });
-      }
-    }
-    await vscode.window.showQuickPick(items, {
-      placeHolder: `全量模型目录: ${models.length} 个模型 · 执大象 天下往`,
-      canPickMany: false,
-    });
-  } catch (e) {
-    vscode.window.showErrorMessage(`模型状态查询失败: ${e.message}`);
-  }
-}
-
 // ═══════════════════════════ EssenceProvider · 本源观照 webview ═══════════════════════════
 class EssenceProvider {
   constructor(ctx) {
@@ -3896,8 +3809,6 @@ function ensureIconSvg() {
 let _essenceProvider = null;
 // ★ 归一·② Proxy Pro: 三模块面板(本源观照·渠ZK配置·模型路由)作为侧栏视图复用
 let _eaRouterProvider = null;
-// ★ 状态栏入口 · 五十二章「既得其母 以知其子」· 三模块面板唯一开门处
-let _statusBarItem = null;
 // ★ 模型解锁 · 首装即自化 · 全109模型现于选择器 (三十七章「万物将自化」)
 let _modelUnlockDone = false;
 
@@ -4016,18 +3927,6 @@ async function ensureUnlockFlowing(attempt) {
       L.warn("unlock-heal", `自愈探测未成 (${attempt}): ${e && e.message}`);
     }
   }
-}
-
-// ★ 状态栏入口刷新 · 显模式/端口 · 点击开三模块中央面板
-function refreshStatusBar() {
-  if (!_statusBarItem) return;
-  const mode = _cachedMode === "passthrough" ? "官" : "ZK";
-  const port = _cachedPort || "—";
-  _statusBarItem.text = `$(circuit-board) ZKAgent Pro · ${mode}`;
-  _statusBarItem.tooltip =
-    `ZKAgent Pro · 模式=${_cachedMode || "custom"} · 端口=${port}\n` +
-    `打开「提示词 / 渠ZK / 路由」`;
-  _statusBarItem.show();
 }
 
 function _candidateAppRoots() {
@@ -4165,30 +4064,19 @@ function activate(ctx) {
         "zk.外接api.toggle",
         cmdExternalApiToggle,
       ),
-      // ★ v9.9.90 · 外接api 热配置面板 · 五十七章「我无为也 而民自化」
-      vscode.commands.registerCommand("zk.eaConfig", cmdEaConfig),
       // ★ 复原官方直连 (卸载善后/解锚) · 卡死中间态一键自救
       vscode.commands.registerCommand("zk.restoreOfficial", cmdRestoreOfficial),
       // v9.9.29 · 印 160 · 终端会话池 (反者ZK之动 · 七层污染一招治)
       vscode.commands.registerCommand("zk.term.exec", cmdTermExec),
       vscode.commands.registerCommand("zk.term.list", cmdTermList),
       vscode.commands.registerCommand("zk.term.close", cmdTermClose),
-      // ★ v9.9.260 · 模型解锁 · 执大象 天下往
-      vscode.commands.registerCommand(
-        "zk.modelUnlock.toggle",
-        cmdModelUnlockToggle,
-      ),
-      vscode.commands.registerCommand(
-        "zk.modelUnlock.status",
-        cmdModelUnlockStatus,
-      ),
     );
 
     // 注册 webview
     _essenceProvider = new EssenceProvider(ctx);
     ctx.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
-        "zk.essence",
+        "dao.essence",
         _essenceProvider,
         {
           webviewOptions: { retainContextWhenHidden: true },
@@ -4209,39 +4097,16 @@ function activate(ctx) {
       ),
     );
 
-    // ★ 状态栏入口 (右下角) · 点击开中央面板
-    // 五十二章「既得其母 以知其子」· 解「面板无处可开」之疾
-    _statusBarItem = vscode.window.createStatusBarItem(
-      vscode.StatusBarAlignment.Right,
-      100,
-    );
-    _statusBarItem.command = "zk.eaConfig";
-    refreshStatusBar();
-    ctx.subscriptions.push(_statusBarItem);
-
-    // ★ 首装即自化 · 反代就位后自动解锁全模型 (含retry · 渡proxy启动窗)
-    // 三十七章「侯王若能守之 万物将自化」· 解「装后仅 SWE1.6」之疾
-    setTimeout(() => {
-      autoModelUnlock(_cachedPort);
-      refreshStatusBar();
-    }, 8000);
-
-    // ★ 解锁自愈 · 渡过 proxy 就绪(8s)+ 文件锚定(15s)+ LS 首发 GetUserStatus 之窗后
-    //   核查 LS 是否真经反代 · 未经则一次性重生 LS · 根治"装后仅 SWE-1.6 Slow"
-    setTimeout(() => {
-      ensureUnlockFlowing();
-    }, 22000);
-
-    // v9.4.2 · 自 focus zk-container · 强制 resolveWebviewView 触发 · SSR 帛书立现
+    // v9.4.2 · 自 focus dao-container · 强制 resolveWebviewView 触发 · SSR 帛书立现
     // 三十七章: ZK恒无名 · 侯王若能守之 · 万物将自化
     // 首装 / 重装 / 更新后 · 侧栏可能默 collapse · 一focus即开 · 主公无需手动
     // v9.9.36 · 5s 延迟 (原 500ms) · 渡过 "Installation modified" 危窗后再强制 focus
     setTimeout(() => {
       try {
         vscode.commands.executeCommand(
-          "workbench.view.extension.zk-container",
+          "workbench.view.extension.dao-container",
         );
-        L.info("activate", "focus zk-container · webview 自化");
+        L.info("activate", "focus dao-container · webview 自化");
       } catch (e) {
         L.warn("activate", `focus fail: ${e.message}`);
       }
@@ -6268,9 +6133,8 @@ class EaRouterProvider {
       try {
         if (!msg || !msg.type) return;
         if (msg.type === "focusEssence")
-          vscode.commands.executeCommand("workbench.view.extension.zk-container");
+          vscode.commands.executeCommand("workbench.view.extension.dao-container");
         else if (msg.type === "openPreview") cmdOpenPreview();
-        else if (msg.type === "modelStatus") cmdModelUnlockStatus();
         else if (msg.type === "saveHandoff") _saveHandoffDoc(msg.content || "");
         else if (msg.type === "copyHandoff") _copyHandoffDoc(msg.content || "");
         else if (msg.type === "openConfigJson") _openConfigJson();
@@ -6279,54 +6143,6 @@ class EaRouterProvider {
     });
     try { webviewView.show(true); } catch {}
     L.info("router", `zk.router resolved · port=${_cachedPort}`);
-  }
-}
-
-async function cmdEaConfig() {
-  try {
-    const panel = vscode.window.createWebviewPanel(
-      "zk.eaConfig",
-      "ZKAgent Pro",
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        portMapping: [
-          { webviewPort: _cachedPort, extensionHostPort: _cachedPort },
-        ],
-      },
-    );
-    const N = _genNonce();
-    panel.webview.html = getEaConfigHtml(_cachedPort, N);
-    // ★ 三模块面板 → 扩展宿主消息桥 · 提示词(①)开侧栏 · 浏览器真SP · 全模目录
-    panel.webview.onDidReceiveMessage((msg) => {
-      try {
-        if (!msg || !msg.type) return;
-        if (msg.type === "focusEssence") {
-          vscode.commands.executeCommand(
-            "workbench.view.extension.zk-container",
-          );
-        } else if (msg.type === "openPreview") {
-          cmdOpenPreview();
-        } else if (msg.type === "modelStatus") {
-          cmdModelUnlockStatus();
-        } else if (msg.type === "saveHandoff") {
-          _saveHandoffDoc(msg.content || "");
-        } else if (msg.type === "copyHandoff") {
-          _copyHandoffDoc(msg.content || "");
-        } else if (msg.type === "openConfigJson") {
-          _openConfigJson();
-        } else if (msg.type === "openExternal" && msg.url) {
-          _openExternalUrl(msg.url);
-        }
-      } catch (e) {
-        L.warn("eaConfig", `msg handle fail: ${e && e.message}`);
-      }
-    });
-    L.info("eaConfig", `webview panel opened · port=${_cachedPort}`);
-  } catch (e) {
-    L.error("eaConfig", `open fail: ${e.message}`);
-    vscode.window.showErrorMessage(`外接API配置面板打开失败: ${e.message}`);
   }
 }
 

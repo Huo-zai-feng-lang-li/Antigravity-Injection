@@ -1,9 +1,9 @@
 {
   "name": "zk-proxy-pro",
-  "displayName": "ZKAgent Pro · 外接API · 反者ZK之动",
+  "displayName": "ZKAgent Pro",
   "description": "Antigravity 提示词反代 + 外接 API：自定义提示词、渠ZK、路由、用量。完整历史见 CHANGELOG。",
-	"version": "9.9.506",
-  "publisher": "zk-agi",
+  "version": "9.9.525",
+  "publisher": "zk-agent",
   "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.85.0"
@@ -48,16 +48,16 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "zk-container",
+          "id": "dao-container",
           "title": "ZKAgent Pro",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "zk-container": [
+      "dao-container": [
         {
-          "id": "zk.essence",
+          "id": "dao.essence",
           "name": "提示词",
           "type": "webview"
         }
@@ -75,12 +75,12 @@
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.toggleMode",
+        "command": "dao.toggleMode",
         "title": "ZKAgent Pro: 切换模式 (ZK ⇄ 官方)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.openPreview",
+        "command": "dao.openPreview",
         "title": "ZKAgent Pro: 浏览器观真 SP (/origin/preview)",
         "category": "ZKAgent Pro"
       },
@@ -95,42 +95,42 @@
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.外接api.toggle",
+        "command": "dao.外接api.toggle",
         "title": "ZKAgent Pro: 外接 api 开关 (第三方API路由 · 默开)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.eaConfig",
+        "command": "dao.eaConfig",
         "title": "ZKAgent Pro: 外接API 热配置 (Provider+路由 · 不重启)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.restoreOfficial",
+        "command": "dao.restoreOfficial",
         "title": "ZKAgent Pro: 复原官方直连 (卸载善后/解锚 · 卡死自救)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.term.exec",
+        "command": "dao.term.exec",
         "title": "ZKAgent Pro: 终端会话池 · exec (七层一招治 · 零第三方)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.term.list",
+        "command": "dao.term.list",
         "title": "ZKAgent Pro: 终端会话池 · list (列所有 sid · 终端池状)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.term.close",
+        "command": "dao.term.close",
         "title": "ZKAgent Pro: 终端会话池 · close (选 sid 关 · 释 shell 进程)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.modelUnlock.toggle",
+        "command": "dao.modelUnlock.toggle",
         "title": "ZKAgent Pro: 模型解锁 开关 (执大象天下往 · 全量109模型注入)",
         "category": "ZKAgent Pro"
       },
       {
-        "command": "zk.modelUnlock.status",
+        "command": "dao.modelUnlock.status",
         "title": "ZKAgent Pro: 模型解锁 状态 (查看全量模型目录)",
         "category": "ZKAgent Pro"
       }
@@ -176,11 +176,11 @@
       }
     }
   },
-	"scripts": {
-		"test": "node vendor/外接api/core/zk-test.js",
-		"test:quick": "node vendor/外接api/core/zk-test.js --quick",
-		"test:ide-context": "node --test test/ide-context.test.js",
-		"test:title": "node --test --test-force-exit test/title-classifier.test.js",
+  "scripts": {
+    "test": "node vendor/外接api/core/zk-test.js",
+    "test:quick": "node vendor/外接api/core/zk-test.js --quick",
+    "test:ide-context": "node --test test/ide-context.test.js",
+    "test:title": "node --test --test-force-exit test/title-classifier.test.js",
     "test:e2e": "node vendor/外接api/core/zk-test.js --e2e",
     "test:protocol": "node vendor/外接api/core/zk-test.js --protocol",
     "package": "vsce package --no-dependencies --allow-missing-repository"

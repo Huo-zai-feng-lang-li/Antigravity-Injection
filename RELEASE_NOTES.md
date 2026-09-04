@@ -10,11 +10,55 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`zk-proxy-pro`** | `v9.9.343` | 核心全功能提示词反代 + 外接 API + 109 模型目录解锁 + ACP stdio 代理 |
+| **`zk-proxy-pro`** | `v9.9.524` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁 + 流式结束保险 + 模型改写动态映射 |
 
 ---
 
 ## 📜 版本发布与 Bug 修复迭代日志
+
+### 🚀 v9.9.524 (2026-09-04)
+- **架构变更**：模型改写从 old-compat-manager 移入插件源码，更新插件后不再需要重新注入
+- **动态映射**：从请求 URL 提取实际模型名，支持未来新模型（3.9/4.0/4.1）自动适配，无需改代码
+- **修复类型**：架构优化 (模型改写合并 + 动态映射)
+- **问题描述**：模型映射硬编码为 gemini-2.5-pro → gemini-3.8-flash-high，官方发布新模型后需要手动改映射；且每次更新插件后需要重新运行 old-compat-manager 注入模型改写
+- **根因分析**：模型改写代码不在插件源码里（属于 old-compat-manager），更新插件会覆盖已注入的改写；且改写目标硬编码，无法自动适配新模型
+- **修复方案**：
+  1. 将 `_ag-gemini37-compat.cjs` 移入插件源码，随 VSIX 打包
+  2. source.js 内置 require 和 hook，更新插件后模型改写自动生效
+  3. 改写逻辑改为从 URL `/v1beta/models/{model}:generateContent` 提取实际模型名，动态改写请求体里的占位符
+  4. URL 提取失败时回退到默认 gemini-3.8-flash-high
+
+---
+
+### 🚀 v9.9.523 (2026-09-04)
+- **修复类型**：Bug 修复 (流式响应结束信号丢失)
+- **问题描述**：模型回答完毕后 IDE 一直显示 "Generating……" 不结束，最终卡死。
+- **根因分析**：`proxyToCloud` 中 `upStream.pipe(res)` 依赖上游 H2 stream 的 `end` 事件触发 `res.end()`，但官方服务器偶发不发送 END_STREAM 帧（或 stream 以 `close` 而非 `end` 结束），导致 `res.end()` 永不调用。
+- **修复方案**：在 pipe 后添加三重保险——①`upStream.on("end")` 显式调 `res.end()`；②`upStream.on("close")` 显式调 `res.end()`；③30 秒空闲超时（无数据则强制 `res.end()` + 取消上游）。
+
+---
+
+### 🚀 v9.9.522 (2026-09-04)
+- **修复类型**：Bug 修复 (autoModelUnlock 初始调用丢失)
+- **问题描述**：Gemini 模型发送请求后 LS 报错 `neither PlanModel nor RequestedModel specified`，提示 "Failed to send"。
+- **根因分析**：v9.9.519 删除底部状态栏时，连带删除了 `setTimeout(() => { autoModelUnlock(_cachedPort); refreshStatusBar(); }, 8000)` 整块代码。`autoModelUnlock` 函数定义仍在但永不执行，导致 `_model_unlock_enabled` 文件不创建，模型解锁实际禁用，UI 无完整模型元数据，请求模型为 unknown。
+- **修复方案**：在 `proxyStart` 成功后（`_publishPort` 之后）恢复 `autoModelUnlock(_cachedPort)` 调用，代理启动后自动解锁。
+
+---
+
+### 🚀 v9.9.521 (2026-09-04)
+- **修复类型**：Bug 修复 (MODEL_UNLOCK 分类被错误注释)
+- **问题描述**：v9.9.518 注释掉 classifyRPC 中的 MODEL_UNLOCK 分类，写"交 old-compat-manager 负责"，但 GetUserSettings 是 IDE→LS 的 gRPC 请求，不经过 HTTP 代理，old-compat-manager 无法处理。
+- **修复方案**：恢复 `classifyRPC` 中 `GetUserSettings`/`GetCascadeModelConfigs` → `return "MODEL_UNLOCK"`。模型解锁是插件基线功能，禁止注释或删除。
+
+---
+
+### 🚀 v9.9.520 (2026-09-04)
+- **修复类型**：Bug 修复 (摘要剔除位置致命 bug) + 显示名统一
+- **问题描述**：v9.9.518/519 中摘要剔除代码被错误地插入在 `let _eaBody = body;` 定义之前，触发 JavaScript 暂时性死区（ReferenceError: Cannot access '_eaBody' before initialization），导致每次聊天请求时代理直接崩溃。
+- **修复方案**：将摘要剔除代码移到 `_eaBody` 定义和 SP 修改之后。同时将 package.json 中所有 "DAOAgent Pro"（28 处）统一改为 "ZKAgent Pro"。
+
+---
 
 ### 🚀 v9.9.343 (2026-08-06)
 - **重构类型**：核心架构重构与品牌统一 (ZK 命名全维度对齐)

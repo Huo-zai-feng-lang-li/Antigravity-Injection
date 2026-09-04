@@ -1,97 +1,115 @@
-# Antigravity-Injection · 反重力 IDE 提示词注入与增强套件
+# Antigravity-Injection · 反重力 IDE 提示词注入插件
 
-这是一个面向 **Antigravity IDE**（已适配 1.20.6 等版本）及生态的系统提示词注入与语言服务器中文化增强插件套件。
-
-通过拦截本地 HTTP 代理与语言服务器请求，无需修改 IDE 二进制即可接管符合分类规则的全局系统提示词 (System Prompt)，并支持自动将 AI 对话标题转换为简体中文。
+面向 **Antigravity IDE** 的系统提示词注入与中文标题转换插件。通过本地代理拦截推理请求，注入自定义系统提示词，并自动将对话标题转换为简体中文。
 
 ---
 
-## 💡 核心功能
+## 核心功能
 
-1. **反重力 IDE 系统提示词注入 (System Prompt Inversion)**
-   - **机制原理**：通过在本地代理层（`sp_invert.js` / `source.js`）实时拦截与重写客户端发起的推理请求（gRPC/HTTP），接管官方硬编码的全局系统提示词 (System Prompt)。
-   - **功能特性**：支持自定义系统提示词，并按请求类型区分主对话、摘要、记忆与标题请求，避免误改无关载荷。
+1. **系统提示词注入**
+   - 拦截本地代理请求，替换/注入全局系统提示词 (System Prompt)
+   - 支持自定义提示词，按请求类型区分主对话、摘要、标题请求
 
-2. **语言服务器 (LSP / ACP) 中文标题提示词注入 (Chinese Title Prompt Injection)**
-   - **机制原理**：Antigravity 主链路通过 LS/CDP 与 HTTP 代理拦截语言服务器请求；仓库另含 ACP `devin.exe` stdio 字节透传脚本，但当前 Antigravity 主激活路径不启用 ACP 模式。
-   - **功能特性**：按请求路径改写标题提示词：Antigravity 私有 Gemini REST 路径要求首行 **4~10 个汉字**；通用 `TITLE_ONLY_ZH_SP` 规则要求 **8~18 个汉字**，并保留后续格式协议行。
+2. **会话标题简体中文转换**
+   - 检测标题生成请求，改写为简体中文约束
+   - 只替换首行规范，保留后续格式协议行
 
-3. **适配 Antigravity 1.20.6**
-   - 自动识别 Windows 平台的 `Antigravity.exe` 主程序及兼容运行时路径。
-   - 保留 `settings.json` 的 JSONC 注释格式，自动注入反代端口及语言服务器端点参数。
-   - 内置 Fail-Safe 机制：若代理未就绪则自动无缝降级为官方直连，不影响 IDE 原生功能。
+3. **文件上下文元信息注入**
+   - 注入活跃文件上下文到提示词
 
----
+4. **历史摘要剔除**
+   - 剔除 `<conversation_summaries>` 标签块，消除注意力稀释、认知漂移和跨任务污染
 
+5. **模型解锁（全量模型目录）**
+   - 拦截 GetUserSettings 响应，注入全量模型目录，突破账号权限限制
+   - 代理启动后 autoModelUnlock 自动执行，无需手动操作
 
-### 4. 核心能力事实矩阵 (Engineering Capability Matrix)
+6. **流式响应结束保险**
+   - end/close/30s空闲超时三重保险，防止官方 H2 stream 不发 END_STREAM 导致 IDE 卡在 Generating
 
-| 核心能力 | 代码入口 | 生效条件 | 证据边界 |
-| :--- | :--- | :--- | :--- |
-| **`🟢 [已实现]` System Prompt 替换** | `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js` | `SP_MODE=invert` && (Connect-RPC/Gemini REST 主对话) | 仅在主对话路径替换 systemInstruction / prompt 锚点 |
-| **`🟡 [条件生效]` 标题提示词替换** | `plugins/zk-proxy-pro/vendor/bundled-origin/source.js + sp_invert.js` | 检测到 `Generate a short conversation title` 请求 | 只替换首行规范，保留第二行协议，模型字数靠提示词约束 |
-| **`🟡 [条件生效]` LS 参数改写** | `plugins/zk-proxy-pro/extension.js` | 本地 HTTP 代理健康检查 200 OK | 代理异常时清除锚点回归官方直连 (Fail-Safe) |
-| **`🟡 [条件生效]` BYOK 路由** | `plugins/zk-proxy-pro/vendor/外接api/runtime.js` | 配置匹配 `CHAT_PROTO` / `CHAT_RAW` 路由 | 仅覆盖配置命中的 Connect-RPC，Gemini REST 走官方 Cloud Code |
-| **`🟢 [已实现]` 模型目录响应合并** | `plugins/zk-proxy-pro/vendor/bundled-origin/source.js + runtime.js` | 响应层匹配模型目录接口 | 只解锁前端目录可见性与 `disabled=false`，不等于上游实际调用权限 |
-| **`🟢 [已实现]` JSONC 注释保留** | `plugins/zk-proxy-pro/extension.js` | 解析 `settings.json` / JSONC 格式配置 | 基于正则剥离与 JSON 解析，保留配置文件中的注释说明 |
-| **`🔵 [仅透传]` Fail-Safe 官方直连** | `plugins/zk-proxy-pro/extension.js` | 代理服务断开或未在端口响应 | 进程 Hook 不改写参数，自动降级为官方直接传输 |
+7. **模型改写 / 动态映射**
+   - 将 LS 内部占位符 `gemini-2.5-pro` 改写为用户实际选择的模型
+   - 从请求 URL `/v1beta/models/{model}:generateContent` 动态提取实际模型名
+   - 官方发布任何新模型（3.9/4.0/4.1）自动适配，无需改映射代码
+   - URL 提取失败时回退到默认 `gemini-3.8-flash-high`
 
----
-
-## 🔗 推荐🌟🌟🌟🌟🌟⭐反重力 IDE 生态配套工具
-
-| 配套工具 / 资源 | GitHub 链接 | 功能说明 |
-| --- | --- | --- |
-| 🛡️ **Antigravity 旧版兼容管理器** | [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) | 为旧版 Antigravity IDE 提供 Claude、Gemini 3.6、Gemini 3.7 兼容放行、启动卡死防护、自动备份、自愈与失败回滚。 |
-| 🏛 **Antigravity 历史版本库** | [Antigravity-ide-history](https://github.com/Huo-zai-feng-lang-li/Antigravity-ide-history) | 收集 Antigravity IDE 历史版本（如 `Antigravity-1.20.6.exe`），方便版本回退与特定环境测试。 |
-| ⚡ **Antigravity-Power-Pro** | [Antigravity-Power-Pro](https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro) | 支持自定义提示词增强、一键快速滚动、侧边栏自由调整大小等。 |
-| 🤖 **Auto-Agent-AntiGravity** | [Auto-Agent-AntiGravity](https://github.com/Huo-zai-feng-lang-li/Auto-Agent-AntiGravity) | Agent 自动点击工具：支持自动点击接受（Auto-Accept）、自动点击重试（Auto-Retry），实现全自动协同。 |
-| 🔌 **vscode-antigravity-cockpit** | [vscode-antigravity-cockpit](https://github.com/Huo-zai-feng-lang-li/vscode-antigravity-cockpit) | 插件版切号：配合桌面端实现无感换号。 |
-| 🧰 **cockpit-tools** | [cockpit-tools](https://github.com/Huo-zai-feng-lang-li/cockpit-tools) | 桌面端切号工具：无感切号桌面端配套组件。 |
+8. **性能优化**
+   - keepAlive false，避免连接复用问题
+   - TTL 缓存 + 短路预筛，热路径开销可忽略
 
 ---
 
-## 📦 最新核心插件
+## 项目分工
 
-> 下表由 `tools/gen-readme-index.js` 据 `package.json` 版本自动维护。
+本插件只做**注入层**。模型兼容层由独立项目负责：
 
-<!-- ZK-MODULE-INDEX:START -->
-| 插件 | 版本 | 扩展 id | 说明 | Release / 下载 |
-|---|---|---|---|---|
-| **zk-proxy-pro** | `9.9.506` | `zk-agi.zk-proxy-pro` | Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。 | [Release](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/tag/zk-proxy-pro-v9.9.506) · [⬇ VSIX](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/download/zk-proxy-pro-v9.9.506/zk-proxy-pro-9.9.506.vsix) |
-<!-- ZK-MODULE-INDEX:END -->
+| 功能 | 本插件 | antigravity-old-compat-manager |
+|---|---|---|
+| 提示词注入 | ✅ | — |
+| 标题简体中文 | ✅ | — |
+| 文件上下文 | ✅ | — |
+| 历史摘要剔除 | ✅ | — |
+| 模型解锁（全量目录） | ✅ | — |
+| 流式响应结束保险 | ✅ | — |
+| 模型改写 / 动态映射 | ✅ | — |
+| 性能优化 | ✅ | — |
+| Bridge 修补部署 | — | ✅ |
+| 模型列表过滤 | — | ✅ |
+| 版本伪装 2.5.5 | — | ✅ |
+| 认证时序修复 | — | ✅ |
+| 备份/恢复/自愈 | — | ✅ |
+
+两个项目必须同时运行才能获得完整功能。
+
+> ⚠️ 发布者固定为 `zk-agent.zk-proxy-pro`，与 old-compat-manager 的 Bridge 目标一致。不得改名。改名必须同步修改 old-compat-manager 的 `runtime/OneLSAgentProxyBridge.cjs`（AGENT_PRO_ID）和 `scripts/StableMode.Core.psm1`（$prefix）。
+>
+> ✅ 模型改写已合并进插件（v9.9.524+），更新插件后**不再需要**运行 old-compat-manager 重新注入模型改写。old-compat-manager 只负责 Bridge 部署、版本伪装、模型列表过滤（这些是改 IDE 目录的，跟插件无关）。
 
 ---
 
-## 🛠 代码架构与关键路径
-
-### 1. 架构说明
-插件使用独立命名空间 `zk.*/wam.*` 与 per-user 端口（默认按用户名映射到 `8889~8988`，可显式配置，冲突时回退空闲端口），提供底层代理、外接 API、模型路由及语言服务器注入功能。外接 API 路由当前仅覆盖配置命中的 Connect-RPC 聊天路径；Gemini REST 路径仍走官方 Cloud Code 上游。模型目录解锁属于响应层可见性合并，不等于上游权限或每个模型均可调用。
-
-### 2. 关键代码文件
-- `plugins/zk-proxy-pro/extension.js`: 扩展入口，负责 IDE 进程感知与配置 Hook。
-- `plugins/zk-proxy-pro/zk-acp-stdio-proxy.js`: ACP (stdio) 代理拦截服务。
-- `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js`: 提示词判定与中文标题规范 (`TITLE_ONLY_ZH_SP`) 注入。
-- `tools/checks/antigravity-target-check.js`: Antigravity 自动化目标断言测试集。
-
----
-
-## 🚀 使用与构建
+## 安装与使用
 
 ### 1. 安装插件
-1. 在 IDE 中按下 `Ctrl+Shift+P`。
-2. 选择 `Extensions: Install from VSIX...` 并选择打包好的 `.vsix` 文件。
+- `Ctrl+Shift+P` → `Extensions: Install from VSIX...` → 选择 `dist/zk-proxy-pro-*.vsix`
+- 插件自带模型改写/动态映射，安装后**不需要**重新注入
 
-如需使用 CDP 调试能力，请以实际主程序路径启动：
-```cmd
-Antigravity.exe --remote-debugging-port=9000
-```
+### 2. 运行兼容管理器（仅首次或重装 IDE 后）
+- 打开 `antigravity-old-compat-manager`
+- 点「检测状态」→「应用并启动」（部署 Bridge、版本伪装、模型列表过滤）
+- **更新插件后不需要重新运行**（模型改写已在插件内）
 
-### 2. 打包与自检 (Node.js ≥ 20)
+### 3. 重启 Antigravity
+- 完全关闭后重新启动，加载插件和兼容补丁
+
+---
+
+## 构建
+
 ```bash
-# 构建插件 package
+# 打包 VSIX (Node.js ≥ 18)
 node scripts/build-vsix.mjs zk-proxy-pro
 
-# 运行自动化目标离线断言测试
-node tools/checks/antigravity-target-check.js
+# 语法检查
+node --check plugins/zk-proxy-pro/extension.js
+node --check plugins/zk-proxy-pro/vendor/bundled-origin/source.js
+
+# 单元测试
+npm test
 ```
+
+---
+
+## 关键代码路径
+
+| 文件 | 职责 |
+|---|---|
+| `plugins/zk-proxy-pro/extension.js` | 扩展入口，IDE 进程感知与配置 Hook |
+| `plugins/zk-proxy-pro/vendor/bundled-origin/source.js` | 本地代理，请求拦截与提示词注入 |
+| `plugins/zk-proxy-pro/vendor/外接api/core/sp_invert.js` | 提示词判定与中文标题规范注入 |
+| `plugins/zk-proxy-pro/ide-context.js` | 文件上下文元信息注入 |
+
+---
+
+## 相关项目
+
+- [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) — 模型兼容层（必须配合使用）

@@ -136,6 +136,7 @@
  * 启动: node 源.js
  */
 "use strict";
+const _agGemini37Compat = require("./_ag-gemini37-compat.cjs");
 const net = require("net");
 const http = require("http");
 const http2 = require("node:http2");
@@ -294,7 +295,7 @@ function _originGetProxyAgent(isHttps) {
     return _originTunnelAgent;
   try {
     _originTunnelAgent = new _OriginTunnelAgent(purl, {
-      keepAlive: true,
+      keepAlive: false,
       keepAliveMsecs: 10000,
       maxSockets: 64,
       maxFreeSockets: 16,
@@ -316,7 +317,7 @@ const ORIGIN_VERSION_BASE = "v9.9.93"; // v9.9.93 · 本源观照内嵌外接API
 // 印 153 · 唯变所适 · 软编码归宗 · 二十五章「逝曰远 远曰反」· 七十六章「兵强则不胜」
 // 病: 多 ext-host 共端口 :8937 · 旧版 in-process proxy 持续 listen · self_file 锁死旧版目录
 //     → 即便装毕新版 vsix · /ping 仍返 v9.9.19/v9.9.20 之 self_file · canon_name 走旧映射
-// 药: ① extension.js · vendorDir() 软编码扫所有 zk-agi.zk-proxy-min-*/ · 选最新 semver 版
+// 药: ① extension.js · vendorDir() 软编码扫所有 zk-agent.zk-proxy-min-*/ · 选最新 semver 版
 //        即旧 ext-host 触 watchdog 复活时 · 也走最新 source.js (枯荣自分 · 新ZK自显)
 //     ② extension.js · proxyStart EADDRINUSE 分支查远端 self_file 是否最新
 //        若旧 · POST /origin/_quit 让位 · sleep 重 listen 自家版本 (上善若水 · 不与争而善胜)
@@ -3119,6 +3120,77 @@ function deOfficialNameToolsProto(topFields) {
   return changed;
 }
 
+// ═══ v9.9.518 · 剔除历史摘要 <conversation_summaries> ═══
+const _CONV_SUMMARIES_RE = /<conversation_summaries>[\s\S]*?<\/conversation_summaries>/gi;
+function _stripConvSummaries(text) {
+  if (typeof text !== "string" || !text) return text;
+  return text.replace(_CONV_SUMMARIES_RE, "");
+}
+function _stripConvSummariesProto(reqBody) {
+  try {
+    const frames = parseFrames(reqBody);
+    if (!frames.length) return reqBody;
+    const f0 = frames[0];
+    const topFields = parseProto(f0.payload);
+    const MSGS_FIELD = findMsgsField(topFields);
+    const msgEntries = topFields[MSGS_FIELD];
+    if (!msgEntries || !msgEntries.length) return reqBody;
+    let changed = false;
+    const newMsgs = [];
+    for (let i = 0; i < msgEntries.length; i++) {
+      const me = msgEntries[i];
+      if (me.w !== 2) { newMsgs.push(me); continue; }
+      const b0 = Buffer.from(me.b);
+      let mf;
+      try { mf = parseProto(b0); } catch {
+        if (looksLikeUtf8Text(b0)) {
+          const text = b0.toString("utf8");
+          if (_CONV_SUMMARIES_RE.test(text)) {
+            const stripped = _stripConvSummaries(text);
+            newMsgs.push({ w: 2, b: Buffer.from(stripped, "utf8") });
+            changed = true;
+            continue;
+          }
+        }
+        newMsgs.push(me);
+        continue;
+      }
+      let msgChanged = false;
+      for (const key of Object.keys(mf)) {
+        const entries = mf[key];
+        if (!Array.isArray(entries)) continue;
+        for (let j = 0; j < entries.length; j++) {
+          const e = entries[j];
+          if (e.w === 2 && e.b) {
+            const buf = Buffer.from(e.b);
+            if (looksLikeUtf8Text(buf)) {
+              const text = buf.toString("utf8");
+              if (_CONV_SUMMARIES_RE.test(text)) {
+                entries[j] = { w: 2, b: Buffer.from(_stripConvSummaries(text), "utf8") };
+                msgChanged = true;
+              }
+            }
+          }
+        }
+      }
+      if (msgChanged) {
+        newMsgs.push({ w: 2, b: serializeProto(mf) });
+        changed = true;
+      } else {
+        newMsgs.push(me);
+      }
+    }
+    if (!changed) return reqBody;
+    topFields[MSGS_FIELD] = newMsgs;
+    const newPayload = serializeProto(topFields);
+    const newFrame = buildFrame(f0.flags, newPayload);
+    return Buffer.concat([newFrame, ...frames.slice(1).map(f => buildFrame(f.flags, f.payload))]);
+  } catch (e) {
+    log("[strip-conv] proto error (passthrough): " + (e && e.message));
+    return reqBody;
+  }
+}
+
 function modifySPProto(reqBody) {
   try {
     const frames = parseFrames(reqBody);
@@ -3513,10 +3585,8 @@ function classifyRPC(reqPath) {
   if (rpc === "GetChatMessage" || rpc === "GetChatMessageV2")
     return "CHAT_PROTO";
   if (rpc === "RawGetChatMessage") return "CHAT_RAW";
-  // ★ v9.9.260 · 模型解锁 · 反者ZK之动 · 无为而无不为
-  //   GetUserSettings 返回 cachedCascadeModelConfigs · 账号权限限制可见模型
-  //   拦截响应 → 注入全量109模型目录 → 前端显示所有模型
-  //   ZK义: 三十五章「执大象 天下往」· 全量模型即大象 · 执之则天下往
+  // ★ v9.9.521 · 模型解锁恢复 · 基线功能，与 old-compat-manager 过滤互补
+  //   GetUserSettings/GetCascadeModelConfigs 注入全量模型目录 · UI 才有完整模型元数据
   if (rpc === "GetUserSettings" || rpc === "GetCascadeModelConfigs")
     return "MODEL_UNLOCK";
   // ★ api_server 工具服务 · 透明直透 (不剥侧信ZK) · 与原版 LSP 一致
@@ -5132,7 +5202,7 @@ function _officialFamiliesSource() {
   return _liveFresh() ? "merged" : "static";
 }
 // ★ v9.9.310 · 端点发现文件 · 让任意本地 Agent 凭固定路径找到运行中的控制面 Base
-//   写 ~/.codeium/zk-byok/endpoint.json · 即便交接文档里的端口过期(重启换端口),
+//   写 ~/.codeium/dao-byok/endpoint.json · 即便交接文档里的端口过期(重启换端口),
 //   Agent 读此文件即得当前真实 base/port · 据此热管理一切 · 六章「玄牝之门」
 function _daoUserDir() {
   const home = process.env.USERPROFILE || process.env.HOME || "";
@@ -6631,6 +6701,33 @@ function proxyToCloud(req, res, overrideBody, _rid) {
         return;
       }
       upStream.pipe(res);
+      // ★ v9.9.523 · 流式响应结束信号保险 · 防 Generating 卡死
+      //   根因: 官方 H2 stream 偶发不触发 end → pipe 不调 res.end() → IDE 一直 Generating
+      //   治: end/close 双保险 + 30s 空闲超时 → res.end() 必被调用
+      {
+        let _idleT = null;
+        const _clearIdle = () => { if (_idleT) { clearTimeout(_idleT); _idleT = null; } };
+        const _resetIdle = () => {
+          _clearIdle();
+          _idleT = setTimeout(() => {
+            if (!res.writableEnded) {
+              log(`#${_rid || "?"} [stream-idle] 30s no data → force res.end()`);
+              try { res.end(); } catch {}
+              _cancelUpstream("idle-timeout(30s)");
+            }
+          }, 30000);
+        };
+        upStream.on("data", () => _resetIdle());
+        upStream.on("end", () => {
+          _clearIdle();
+          if (!res.writableEnded) { try { res.end(); } catch {} }
+        });
+        upStream.on("close", () => {
+          _clearIdle();
+          if (!res.writableEnded) { try { res.end(); } catch {} }
+        });
+        _resetIdle();
+      }
       // ★ v9.9.72a · 传输层诊断: 捕获官方响应体前 500 字节 hex
       {
         let _offBuf = [],
@@ -6884,12 +6981,33 @@ const _mainHandler = async (req, res) => {
       } else if (kind === "GEMINI_REST_CHAT") {
         _eaBody = _injectIdeContext(_eaBody);
         _eaBody = modifyGeminiRestSP(_eaBody, req.url);
+    if (kind === "GEMINI_REST_CHAT") {
+      const _agB = _agGemini37Compat.rewriteRequestBody(_eaBody, req.url);
+      if (_agB !== _eaBody) { _eaBody = _agB; }
+    }
       }
       if (_eaBody !== body) {
         log(
           `#${rid} [最上游SP] ${kind} ${body.length}B → ${_eaBody.length}B (before _ea routing)`,
         );
       }
+    }
+
+    // ═══ v9.9.518 · 剔除历史摘要 <conversation_summaries> ═══
+    // 真因: IDE 把最近10~11次会话摘要塞入上下文 → 注意力稀释+认知漂移+跨任务污染
+    // 治: 所有聊天请求(CHAT_PROTO/CHAT_RAW/GEMINI_REST_CHAT)无条件剔除该标签块
+    let _stripBody = _eaBody;
+    if (kind === "CHAT_PROTO") {
+      _stripBody = _stripConvSummariesProto(_eaBody);
+    } else if (kind === "CHAT_RAW" || kind === "GEMINI_REST_CHAT") {
+      const _text = _stripBody.toString("utf8");
+      if (_CONV_SUMMARIES_RE.test(_text)) {
+        _stripBody = Buffer.from(_stripConvSummaries(_text), "utf8");
+      }
+    }
+    if (_stripBody !== _eaBody) {
+      log(`#${rid} [strip-conv] ${kind} ${_eaBody.length}B → ${_stripBody.length}B`);
+      _eaBody = _stripBody;
     }
 
     // 4.5P · 外接api路由 · 无为而无以为 · ZK并行而不相悖
@@ -7516,6 +7634,8 @@ function _runCli() {
 if (require.main === module) _runCli();
 
 module.exports = {
+  _stripConvSummaries,
+  _stripConvSummariesProto,
   // v9.7.0 路 为ZK日损 路 仅留实用 exports
   invertSP,
   isLikelyOfficialSP,

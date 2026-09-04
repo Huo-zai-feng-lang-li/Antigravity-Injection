@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-vsix.mjs",
-    "test": "node --test plugins/zk-proxy-pro/test/title-classifier.test.js plugins/zk-proxy-pro/test/ide-context.test.js && node tools/checks/antigravity-target-check.js",
+    "test": "node --test plugins/zk-proxy-pro/test/title-classifier.test.js plugins/zk-proxy-pro/test/ide-context.test.js plugins/zk-proxy-pro/test/gemini-compat.test.js plugins/zk-proxy-pro/test/model-whitelist.test.js plugins/zk-proxy-pro/test/conv-summaries.test.js && node tools/checks/antigravity-target-check.js",
     "release": "node scripts/bump-version.mjs",
     "bump": "node scripts/bump-version.mjs"
   }

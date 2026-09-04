@@ -187,11 +187,10 @@ function _getProxyAgent(isHttps) {
   if (!url) return undefined;
   if (_daoTunnelAgent && _daoTunnelAgentUrl === url) return _daoTunnelAgent;
   try {
+    // v9.9.507 · 回退 b48a27e 的 keepAlive 池化: 手写 CONNECT 隧道复用空闲 socket
+    //   经本地代理易拿到半开隧道致挂起/重置 · 外接api 已整体下线, 回到已知稳态
     _daoTunnelAgent = new _DaoTunnelAgent(url, {
-      keepAlive: true,
-      keepAliveMsecs: 10000,
-      maxSockets: 64,
-      maxFreeSockets: 16,
+      keepAlive: false,
     });
     _daoTunnelAgentUrl = url;
     return _daoTunnelAgent;

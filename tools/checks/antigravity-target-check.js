@@ -761,7 +761,7 @@ function assertLsMainBridgePortRuntime(file) {
     },
     path,
     process: { pid: 1234 },
-    PKG_VERSION: "9.9.506",
+    PKG_VERSION: "9.9.510",
   };
   vm.createContext(sandbox);
   vm.runInContext(
@@ -822,7 +822,11 @@ for (const file of extensionFiles) {
   assertIncludes(file, "/origin/custom_sp", "custom prompt endpoint");
   assertIncludes(file, '[".zk", ".dao"]', "LS Main bridge compatibility port");
   assertIncludes(file, "提示词", "short prompt UI wording");
-  assertIncludes(file, "输入自定义提示词", "short custom prompt placeholder");
+  assertIncludes(file, "版本伪装", "version spoofing UI");
+  assertIncludes(file, "模型别名映射", "model alias mapping UI");
+  assertIncludes(file, "模型列表过滤", "model whitelist UI");
+  assertIncludes(file, "代理状态", "proxy status UI");
+  assertIncludes(file, "获取最新模型列表", "model catalog refresh button");
   assertIncludes(file, "\\u5df2\\u4fdd\\u5b58", "short save status");
   assertNotIncludes(file, 'id="btnZk"', "zk mode button removed");
   assertNotIncludes(file, 'id="canonSelect"', "canon dropdown removed");

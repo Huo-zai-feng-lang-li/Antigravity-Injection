@@ -1,22 +1,55 @@
-# 最新接续状态 (2026-08-06 16:32)
+# Handoff · zk-proxy-pro v9.9.524
 
-## 核心进展
-- 已完成 `zk-proxy-pro` 插件自定义提示词注入逻辑与 LS Bridge 端口分发的全面修复，提示词模式收敛锁定为 `custom`，自动化断言校验 100% 递增提交（Commit: `c611787`）。
+## 当前状态
+- 版本：`zk-agent.zk-proxy-pro v9.9.524`
+- 发布者：`zk-agent`（必须与 old-compat-manager 一致）
+- 已安装：`C:\Users\Administrator\.antigravity\extensions\zk-agent.zk-proxy-pro-9.9.524\`（唯一版本，旧版本已删除）
+- 最新 VSIX：`dist/zk-proxy-pro-9.9.524.vsix`（517KB）
+- 代理端口：8937
 
-## 核心动机与背景 (Motivation & Background)
-- **提示词覆盖风险**：之前存在多模式组合导致在特定场景下退回官方默认提示词的问题，需要锁定为纯粹的 `custom` 模式并强制注入反重力规则。
-- **端口兼容性依赖**：前置/后置桥接组件分散寻找 `.zk` 和 `.dao` 目录下的端口文件，需要通过双目录广播打通兼容性。
+## 项目分工（零重叠）
 
-## 关键设计与实现 (Implementation & Decisions)
-- **提示词模式纯粹化**：在 `plugins/zk-proxy-pro/package.json` 和 `source.js` 中将默认模式设置为 `custom`，优化 `_effectiveCustomSP()` 与 `_geminiFallbackSystemText()` 拦截保护链。
-- **双目录端口广播**：在 `extension.js` 和 `source.js` 中的 `_publishPort()` 实现同时写入 `~/.zk/origin-port.json` 与 `~/.dao/origin-port.json`。
-- **静态规则打包解耦**：打包内置 `plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt`，保证无配置场景下亦有完整规则兜底。
-- **自动化离线校验断言**：在 `tools/checks/antigravity-target-check.js` 中新增针对端口双写、`SP_MODE` 逻辑分支及 `.vsix` 文件镜像的全面硬取证断言，全绿通过。
+### 本插件（注入层 + 模型改写）
+- 提示词注入
+- 会话标题简体中文
+- 文件上下文元信息（ide-context.js）
+- 历史摘要剔除（`<conversation_summaries>`）
+- 模型解锁（GetUserSettings 注入全量模型目录，autoModelUnlock 自动执行）
+- 流式响应结束保险（end/close/30s空闲超时三重保险，防 Generating 卡死）
+- **模型改写 / 动态映射**（v9.9.524+ 从 old-compat-manager 移入）
+  - `_ag-gemini37-compat.cjs` 随 VSIX 打包
+  - 从 URL `/v1beta/models/{model}:generateContent` 提取实际模型名
+  - 改写 LS 占位符 `gemini-2.5-pro` → 用户实际选择的模型
+  - 支持未来新模型（3.9/4.0/4.1）自动适配，无需改代码
+  - URL 提取失败时回退到默认 `gemini-3.8-flash-high`
+- 性能优化（keepAlive false、TTL 缓存、短路预筛）
 
-## 待办事项 (Next Steps)
-- [ ] 执行 `/git-push` 将 commit `c611787` 推送到远程 GitHub 仓库。
-- [ ] 可选：如需发布新版本，执行 `vsce package` 或重新构建打包扩展。
+### old-compat-manager（兼容层）
+- Bridge 修补部署（dao-one-ls-agent-pro.cjs）
+- 模型列表过滤/白名单（修改 workbench.js，防 IDE 卡死）
+- 版本伪装（product.json ideVersion=2.5.5）
+- 认证时序修复
+- 备份/恢复/自愈
+- **不再负责模型改写**（已移入插件 v9.9.524+）
 
-## 关键上下文
-- 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\反重力\Antigravity-Injection`
-- 主要文件: `plugins/zk-proxy-pro/vendor/bundled-origin/source.js`, `plugins/zk-proxy-pro/extension.js`, `tools/checks/antigravity-target-check.js`, `plugins/zk-proxy-pro/vendor/bundled-origin/_antigravity_rules.txt`
+## 关键约束
+- 发布者必须是 `zk-agent`，不得改名（old-compat-manager 的 Bridge AGENT_PRO_ID 硬编码匹配）
+- 插件不得实现 Bridge、模型过滤、版本伪装（改 app 目录的功能）
+- 大文件（extension.js/source.js）禁止模糊锚点大范围替换
+- 模型解锁是基线功能，禁止注释或删除（v9.9.518 误注释导致 Failed to send）
+- autoModelUnlock 必须在 proxyStart 成功后调用（v9.9.519 误删导致模型解锁永不执行）
+- 模型改写已在插件内（v9.9.524+），更新插件后**不需要**重新运行 old-compat-manager 注入
+
+## 血的教训
+1. **目录搞错**：修改 9.9.520 目录但代理加载 9.9.522，改了白改。必须先检查代理的 self_file 确认加载目录。
+2. **覆盖冲掉模型改写**：v9.9.524 之前，每次用项目源码覆盖已安装 source.js，都会冲掉 old-compat-manager 注入的模型改写。v9.9.524 后模型改写已在插件源码内，不再有此问题。
+3. **删除状态栏连带删除 autoModelUnlock**：v9.9.519 删除状态栏时把 `setTimeout(() => { autoModelUnlock(_cachedPort); refreshStatusBar(); }, 8000)` 整块删了，导致模型解锁永不执行。
+4. **注释 MODEL_UNLOCK**：v9.9.518 注释掉 classifyRPC 中的 MODEL_UNLOCK 分类，写"交 old-compat-manager 负责"，但 GetUserSettings 是 gRPC 请求不经过 HTTP 代理，old-compat-manager 无法处理。
+
+## 使用流程
+- 日常使用：什么都不用管，直接打开 IDE
+- 重装 IDE 后：安装插件 VSIX → 运行 old-compat-manager「应用并启动」（Bridge/版本伪装/模型过滤）→ 启动 IDE
+- 更新插件后：安装新 VSIX → 重启 IDE（模型改写自动生效，不需要 old-compat-manager）
+
+## 待办
+- 无。当前版本功能完整，代理正常，Gemini 3.8 可正常响应，动态映射支持未来新模型。
