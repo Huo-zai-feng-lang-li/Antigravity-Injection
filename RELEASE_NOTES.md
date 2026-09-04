@@ -10,11 +10,28 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`zk-proxy-pro`** | `v9.9.524` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁 + 流式结束保险 + 模型改写动态映射 |
+| **`zk-proxy-pro`** | `v9.9.525` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁 + 流式结束保险 + 模型改写动态映射 + 命名统一 zk-proxy-pro |
 
 ---
 
 ## 📜 版本发布与 Bug 修复迭代日志
+
+### 🚀 v9.9.525 (2026-09-04)
+- **架构变更**：插件 name 从 `dao-proxy-pro` 改为 `zk-proxy-pro`，publisher 统一为 `zk-agent`，完整扩展 ID `zk-agent.zk-proxy-pro`
+- **Bridge 兼容**：bridge-patch 模板 AGENT_PRO_IDS 更新为三版本兼容（zk-agent 当前 / zk-agi 历史 / dao-agi 历史）
+- **修复类型**：命名统一 + 文档同步 + 垃圾清理
+- **问题描述**：插件名从 dao-proxy-pro 改为 zk-proxy-pro 后，old-compat-manager 的 Bridge 和 PSM1 仍引用旧扩展 ID，导致 Bridge 找不到插件、代理不响应
+- **根因分析**：两个项目的扩展 ID 引用分散在多处（Bridge AGENT_PRO_ID、PSM1 $prefix、测试文件、文档），改名时未同步更新所有引用
+- **修复方案**：
+  1. 插件 package.json name=publisher=zk-agent
+  2. source.js/extension.js 所有扩展 ID 引用同步更新
+  3. old-compat-manager Bridge AGENT_PRO_ID → zk-agent.zk-proxy-pro
+  4. old-compat-manager PSM1 $prefix → zk-agent.zk-proxy-pro-
+  5. 两个项目 README/rules/handoff/CHANGELOG 全部同步更新
+  6. 清理旧计划文档、.serena 目录、backups(2GB)、logs、旧 VSIX
+- **与 old-compat-manager 配合**：插件负责注入层 + 模型改写；old-compat-manager 负责 Bridge部署、版本伪装、模型列表过滤；功能零重叠
+
+---
 
 ### 🚀 v9.9.524 (2026-09-04)
 - **架构变更**：模型改写从 old-compat-manager 移入插件源码，更新插件后不再需要重新注入

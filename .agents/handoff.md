@@ -1,11 +1,18 @@
-# Handoff · zk-proxy-pro v9.9.524
+# Handoff · zk-proxy-pro v9.9.525
 
 ## 当前状态
-- 版本：`zk-agent.zk-proxy-pro v9.9.524`
+- 版本：`zk-agent.zk-proxy-pro v9.9.525`
 - 发布者：`zk-agent`（必须与 old-compat-manager 一致）
-- 已安装：`C:\Users\Administrator\.antigravity\extensions\zk-agent.zk-proxy-pro-9.9.524\`（唯一版本，旧版本已删除）
-- 最新 VSIX：`dist/zk-proxy-pro-9.9.524.vsix`（517KB）
+- 已安装：`C:\Users\Administrator\.antigravity\extensions\zk-agent.zk-proxy-pro-9.9.525\`（唯一版本，旧版本已删除）
+- 最新 VSIX：`dist/zk-proxy-pro-9.9.525.vsix`（450KB）
+- GitHub Release：`zk-proxy-pro-v9.9.525`（已上传 VSIX）
 - 代理端口：8937
+
+## v9.9.525 变更
+- 插件 name 从 `dao-proxy-pro` 改为 `zk-proxy-pro`，完整扩展 ID `zk-agent.zk-proxy-pro`
+- bridge-patch 模板 AGENT_PRO_IDS 更新为三版本兼容（zk-agent 当前 / zk-agi 历史 / dao-agi 历史）
+- 两个项目所有文档同步更新
+- 清理旧计划文档、.serena 目录、backups(2GB)、logs、旧 VSIX
 
 ## 项目分工（零重叠）
 

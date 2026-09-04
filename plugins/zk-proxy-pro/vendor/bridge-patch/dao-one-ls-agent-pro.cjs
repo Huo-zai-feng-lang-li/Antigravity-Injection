@@ -5,9 +5,9 @@ const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
 
-// v9.9.507 · 兼容 zk-agi.zk-proxy-pro 与 dao-agi.dao-proxy-pro 双发布者
-//   优先 zk(当前维护版), 回退 dao(历史版); 任一存在且代理健康即 bridge ready
-const AGENT_PRO_IDS = ["zk-agi.zk-proxy-pro", "dao-agi.dao-proxy-pro"];
+// v9.9.525 · 兼容 zk-agent.zk-proxy-pro(当前) / zk-agi.zk-proxy-pro(历史) / dao-agi.dao-proxy-pro(历史)
+//   优先当前维护版, 回退历史版; 任一存在且代理健康即 bridge ready
+const AGENT_PRO_IDS = ["zk-agent.zk-proxy-pro", "zk-agi.zk-proxy-pro", "dao-agi.dao-proxy-pro"];
 const DEFAULT_PORT = 8889;
 
 function readObsolete(extensionsRoot) {
