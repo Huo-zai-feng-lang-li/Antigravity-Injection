@@ -6703,19 +6703,23 @@ function proxyToCloud(req, res, overrideBody, _rid) {
       upStream.pipe(res);
       // ★ v9.9.523 · 流式响应结束信号保险 · 防 Generating 卡死
       //   根因: 官方 H2 stream 偶发不触发 end → pipe 不调 res.end() → IDE 一直 Generating
-      //   治: end/close 双保险 + 30s 空闲超时 → res.end() 必被调用
+      //   治: end/close 双保险(所有响应) + 空闲超时(仅 SSE 流式, 120s)
+      //   v9.9.526 修复: 30s 空闲超时对所有响应生效会误杀长时间终端任务(编译/npm install)
+      //     → 空闲超时仅对 text/event-stream 启用, 延长到 120s; 非流式只靠 end/close
       {
+        const _isSSE = /text\/event-stream/i.test(resHeaders["content-type"] || "");
         let _idleT = null;
         const _clearIdle = () => { if (_idleT) { clearTimeout(_idleT); _idleT = null; } };
         const _resetIdle = () => {
+          if (!_isSSE) return; // 非 SSE 不设空闲超时, 避免误杀长任务
           _clearIdle();
           _idleT = setTimeout(() => {
             if (!res.writableEnded) {
-              log(`#${_rid || "?"} [stream-idle] 30s no data → force res.end()`);
+              log(`#${_rid || "?"} [stream-idle] SSE 120s no data → force res.end()`);
               try { res.end(); } catch {}
-              _cancelUpstream("idle-timeout(30s)");
+              _cancelUpstream("idle-timeout(120s,SSE)");
             }
-          }, 30000);
+          }, 120000);
         };
         upStream.on("data", () => _resetIdle());
         upStream.on("end", () => {
