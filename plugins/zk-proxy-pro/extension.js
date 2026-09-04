@@ -777,9 +777,8 @@ async function proxyStart(port, mode, _retried, _altAttempts) {
     _proxyHealthy = true;
     _cachedProxyUrl = `http://127.0.0.1:${_cachedPort}`;
     _publishPort(_cachedPort);
-    // ★ v9.9.522 · 自动模型解锁 · 代理启动后调 /origin/model_unlock · 幂等
-    //   三十七章「侯王若能守之 万物将自化」· 解「装后仅 SWE1.6」之疾
-    autoModelUnlock(_cachedPort);
+    // v9.9.528 · 不再自动启用模型解锁: 账号登录后官方本身返回全量模型
+    //   模型列表请求纯透传, 减少缓冲解析开销; 权限受限时可手动 POST /origin/model_unlock 恢复
     L.info(
       "proxy",
       `started :${_proxyHandle.port} src=${srcPath} mode=${_proxyHandle.getMode()} · healthy`,
@@ -3809,46 +3808,6 @@ function ensureIconSvg() {
 let _essenceProvider = null;
 // ★ 归一·② Proxy Pro: 三模块面板(本源观照·渠ZK配置·模型路由)作为侧栏视图复用
 let _eaRouterProvider = null;
-// ★ 模型解锁 · 首装即自化 · 全109模型现于选择器 (三十七章「万物将自化」)
-let _modelUnlockDone = false;
-
-// ★ 自动模型解锁 · 反代就位后调 /origin/model_unlock · 幂等 · 首装即全模可选
-async function autoModelUnlock(port, attempt) {
-  attempt = attempt || 0;
-  if (_modelUnlockDone || !port) return;
-  try {
-    const status = await httpGetJson(
-      `http://127.0.0.1:${port}/origin/model_unlock`,
-      2000,
-    );
-    if (status && status.enabled === true) {
-      _modelUnlockDone = true;
-      L.info("modelUnlock", "已处解锁态 · 全模型自现 · 不复行");
-      return;
-    }
-    const result = await httpPostJson(
-      `http://127.0.0.1:${port}/origin/model_unlock`,
-      { enabled: true },
-      2500,
-    );
-    if (result && result.ok) {
-      _modelUnlockDone = true;
-      L.info(
-        "modelUnlock",
-        `首装自动解锁 ✅ · ${result.catalog_size || 0} 模型入选择器 · 执大象 天下往`,
-      );
-    } else if (attempt < 5) {
-      setTimeout(() => autoModelUnlock(port, attempt + 1), 3000);
-    }
-  } catch (e) {
-    if (attempt < 5) {
-      setTimeout(() => autoModelUnlock(port, attempt + 1), 3000);
-    } else {
-      L.warn("modelUnlock", `自动解锁未成 (${attempt}): ${e && e.message}`);
-    }
-  }
-}
-
 // ★ 解锁自愈 · 反者ZK之动 · 治"新用户只剩 SWE-1.6 Slow·其余全灰"之莫名顽疾
 //   真因: LS 常在 proxy 就绪/锚定(15s)之前被 Antigravity spawn → 直连官方服务器
 //         → GetUserStatus 不经反代 → Pro 锁(proto field 4/33)未剥 → picker 仅

@@ -5563,9 +5563,11 @@ function _getOfficialFamilies() {
 function _isModelUnlockEnabled() {
   try {
     const v = fs.readFileSync(_MODEL_UNLOCK_ENABLED_FILE, "utf8").trim();
-    return v !== "0" && v !== "false" && v !== "disabled";
+    // v9.9.528 · 默认禁用: 账号登录后官方本身返回全量模型, 无需注入合并
+    //   仅当显式写入 "1"/"true"/"enabled" 时才启用 (账号权限受限时手动恢复)
+    return v === "1" || v === "true" || v === "enabled";
   } catch {
-    return true; // 默认启用
+    return false; // 默认禁用 · 模型列表请求纯透传, 减少缓冲解析开销
   }
 }
 
