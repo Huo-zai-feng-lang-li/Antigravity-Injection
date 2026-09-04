@@ -5,3 +5,4 @@ dist/
 *.log
 .vscode-test/
 *_dump.json
+.codegraph/
