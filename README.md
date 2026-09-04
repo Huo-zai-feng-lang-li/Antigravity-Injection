@@ -58,7 +58,7 @@
 <!-- ZK-MODULE-INDEX:START -->
 | 插件 | 版本 | 扩展 id | 说明 | Release / 下载 |
 |---|---|---|---|---|
-| **zk-proxy-pro** | `9.9.505` | `zk-agi.zk-proxy-pro` | Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。 | [Release](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/tag/zk-proxy-pro-v9.9.505) · [⬇ VSIX](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/download/zk-proxy-pro-v9.9.505/zk-proxy-pro-9.9.505.vsix) |
+| **zk-proxy-pro** | `9.9.506` | `zk-agi.zk-proxy-pro` | Antigravity 提示词反代 + 外接 API：自定义提示词、渠道、路由、用量。 | [Release](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/tag/zk-proxy-pro-v9.9.506) · [⬇ VSIX](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection/releases/download/zk-proxy-pro-v9.9.506/zk-proxy-pro-9.9.506.vsix) |
 <!-- ZK-MODULE-INDEX:END -->
 
 ---

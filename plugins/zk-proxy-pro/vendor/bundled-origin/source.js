@@ -293,7 +293,12 @@ function _originGetProxyAgent(isHttps) {
   if (_originTunnelAgent && _originTunnelAgentUrl === purl)
     return _originTunnelAgent;
   try {
-    _originTunnelAgent = new _OriginTunnelAgent(purl, { keepAlive: false });
+    _originTunnelAgent = new _OriginTunnelAgent(purl, {
+      keepAlive: true,
+      keepAliveMsecs: 10000,
+      maxSockets: 64,
+      maxFreeSockets: 16,
+    });
     _originTunnelAgentUrl = purl;
     return _originTunnelAgent;
   } catch (_e) {

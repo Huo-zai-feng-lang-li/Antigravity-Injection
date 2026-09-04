@@ -187,7 +187,12 @@ function _getProxyAgent(isHttps) {
   if (!url) return undefined;
   if (_daoTunnelAgent && _daoTunnelAgentUrl === url) return _daoTunnelAgent;
   try {
-    _daoTunnelAgent = new _DaoTunnelAgent(url, { keepAlive: false });
+    _daoTunnelAgent = new _DaoTunnelAgent(url, {
+      keepAlive: true,
+      keepAliveMsecs: 10000,
+      maxSockets: 64,
+      maxFreeSockets: 16,
+    });
     _daoTunnelAgentUrl = url;
     return _daoTunnelAgent;
   } catch (_e) {

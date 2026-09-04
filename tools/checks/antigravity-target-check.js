@@ -761,7 +761,7 @@ function assertLsMainBridgePortRuntime(file) {
     },
     path,
     process: { pid: 1234 },
-    PKG_VERSION: "9.9.505",
+    PKG_VERSION: "9.9.506",
   };
   vm.createContext(sandbox);
   vm.runInContext(
