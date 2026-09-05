@@ -34,8 +34,8 @@
    - URL 提取失败时回退到默认 `gemini-3.8-flash-high`
 
 8. **性能优化**
-   - keepAlive false，避免连接复用问题
-   - TTL 缓存 + 短路预筛，热路径开销可忽略
+   - keepAlive false，避免外网代理隧道连接复用问题（上游官方 H2 session 独立复用）
+   - Buffer.indexOf 短路预筛 + 小配置文件同步读（OS 缓存，开销可忽略），热路径总开销 <10ms
 
 ---
 
