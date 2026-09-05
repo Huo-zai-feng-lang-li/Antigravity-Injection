@@ -21,11 +21,11 @@
    - 剔除 `<conversation_summaries>` 标签块，消除注意力稀释、认知漂移和跨任务污染
 
 5. **模型解锁（全量模型目录）**
-   - 拦截 GetUserSettings 响应，注入全量模型目录，突破账号权限限制
-   - 代理启动后 autoModelUnlock 自动执行，无需手动操作
+   - 具备拦截 GetUserSettings 注入全量模型目录能力；v9.9.528+ 默认禁用并走纯透传以降低首字延迟，支持按需手动开启
+   - 突破未完全授权账号权限限制，按需展示所有模型
 
 6. **流式响应结束保险**
-   - end/close/30s空闲超时三重保险，防止官方 H2 stream 不发 END_STREAM 导致 IDE 卡在 Generating
+   - end/close/120s SSE 空闲超时三重保险，防止官方 H2 stream 不发 END_STREAM 导致 IDE 卡在 Generating，同时避免误杀长任务请求
 
 7. **模型改写 / 动态映射**
    - 将 LS 内部占位符 `gemini-2.5-pro` 改写为用户实际选择的模型
