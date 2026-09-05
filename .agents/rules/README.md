@@ -16,8 +16,8 @@
 | 会话标题简体中文 | `source.js` + `title-classifier.js` | 检测标题生成请求，改写为简体中文约束 |
 | 文件上下文元信息 | `ide-context.js` | 注入活跃文件上下文到提示词 |
 | 历史摘要剔除 | `source.js` `_stripConvSummaries` | 剔除 `<conversation_summaries>` 标签块，消除认知漂移 |
-| 模型解锁（全量模型目录） | `source.js` MODEL_UNLOCK + `extension.js` autoModelUnlock | 拦截 GetUserSettings 响应注入全量模型目录，代理启动后自动执行 |
-| 流式响应结束保险 | `source.js` stream-idle | end/close/30s空闲超时三重保险，防 Generating 卡死 |
+| 模型解锁（全量模型目录） | `source.js` MODEL_UNLOCK | 具备拦截 GetUserSettings 注入全量目录能力；**v9.9.528+ 默认禁用走纯透传**（账号登录后免费/VIP 官方本身返回全量模型，模型过滤在 old-compat-manager），仅账号权限受限时手动 POST /origin/model_unlock 开启 |
+| 流式响应结束保险 | `source.js` stream-idle | end/close 双保险（所有响应）+ 120s 空闲超时（**仅 text/event-stream**），防 Generating 卡死且不误杀长时间终端任务（v9.9.527） |
 | 模型改写 / 动态映射 | `_ag-gemini37-compat.cjs` + `source.js` hook | v9.9.524+ 从 old-compat-manager 移入。从 URL 提取实际模型名，改写 LS 占位符 gemini-2.5-pro。支持未来新模型自动适配 |
 | 性能优化 | `source.js` | keepAlive false、TTL 缓存、短路预筛 |
 
@@ -45,17 +45,15 @@ _ensureProductVersion
 /origin/official_models
 ```
 
-> 注：`_stripConvSummaries`（历史摘要剔除）、`_agGemini37Compat`（模型改写/动态映射，v9.9.524+）、`/origin/model_catalog`（模型目录查看）和模型解锁（GetUserSettings 注入全量模型）都是插件自身功能，不在红线内。模型解锁让所有模型可见，old-compat-manager 再做白名单过滤。保留。
+> 注：`_stripConvSummaries`（历史摘要剔除）、`_agGemini37Compat`（模型改写/动态映射，v9.9.524+）、`/origin/model_catalog`（模型目录查看）都是插件自身功能，不在红线内。模型解锁代码保留但 v9.9.528+ 默认禁用（账号本身返回全量模型，白名单过滤由 old-compat-manager 负责）。
 
-### 1.3.1 模型解锁基线红线（v9.9.522 血的教训）
+### 1.3.1 模型解锁策略（v9.9.528 起默认禁用）
 
-模型解锁是插件**必须保留**的基线功能，禁止注释、删除或"交 old-compat-manager 负责"：
-
-1. **source.js `classifyRPC`**：`GetUserSettings` / `GetCascadeModelConfigs` 必须 `return "MODEL_UNLOCK"`。GetUserSettings 是 IDE→LS 的 gRPC 请求，不经过 HTTP 代理，old-compat-manager 无法处理，必须由插件在 source.js 响应注入中处理。
-2. **extension.js `autoModelUnlock`**：函数定义后必须在 `proxyStart` 成功后调用 `autoModelUnlock(_cachedPort)`。删除状态栏/面板时不得连带删除此调用（v9.9.519 误删导致模型解锁永不执行，`_model_unlock_enabled` 文件不创建，UI 无模型元数据，请求模型为 unknown → Failed to send）。
-3. **验证**：发版前必须确认 `_model_unlock_enabled` 文件在代理启动后自动创建，`http://127.0.0.1:<port>/origin/model_unlock` 返回 `enabled: true`。
-
-出现任何一个即为架构越界，必须回退。
+1. **默认禁用**：`_isModelUnlockEnabled()` 在标记文件缺失时返回 **false**，GetUserSettings/GetUserStatus 纯流式透传，不缓冲、不解析、不合并，降低模型列表请求延迟。
+2. **依据**：账号登录后无论免费还是 VIP，官方本身返回全量模型列表；模型列表过滤由 old-compat-manager 改 workbench.js 负责，本插件不需要解锁。
+3. **手动恢复**：仅当账号权限受限、模型变灰/缺失时，POST `http://127.0.0.1:<port>/origin/model_unlock` body `{"enabled":true}` 启用（写标记文件），POST `{"enabled":false}` 再关闭。
+4. **禁止重新加回 autoModelUnlock 自动调用**：该函数已删除。历史上 v9.9.519 的 Failed to send 真因是模型改写被源码覆盖冲掉（当时在 old-compat-manager），**与模型解锁无关**，不得据此重新默认启用解锁。
+5. `classifyRPC` 中 `GetUserSettings`/`GetCascadeModelConfigs` 仍 `return "MODEL_UNLOCK"`（保留分类与解锁代码路径，禁用时函数内部自动退化为透传），不要删除分类。
 
 ### 1.4 为什么必须分离
 
@@ -104,8 +102,9 @@ v9.9.510~516 的教训：插件做了 old-compat-manager 的事，导致：
 ### 3.3 性能约束
 
 - 热路径（请求拦截）必须用 `Buffer.indexOf` 预筛做零解析短路，无命中不做 JSON.parse
-- 读盘操作（mode/canon/配置文件）必须有 TTL 缓存（默认 500ms）
-- keepAlive 必须为 false（true 会导致连接复用问题和 Gemini 503）
+- mode/canon 等小配置文件允许每请求同步读（文件极小 + OS page cache，单次 0.1-1ms 可忽略）；禁止在热路径读大文件或做昂贵计算
+- keepAlive 必须为 false（true 会导致外网代理隧道连接复用问题和 Gemini 503）；上游官方 H2 session 通过 `_h2Sessions` 复用，不受此项影响
+- 代理侧每请求总开销应控制在 10ms 内；首字延迟瓶颈在官方服务器与网络，不在代理，不要为"体感提速"做无意义改动（v9.9.528 性能结论）
 
 ---
 
@@ -154,7 +153,7 @@ node scripts/build-vsix.mjs zk-proxy-pro
 2. 安装 VSIX
 3. 重启 Antigravity
 4. 确认扩展加载为 `zk-agent.zk-proxy-pro`
-5. 确认 `_model_unlock_enabled` 文件自动创建，模型解锁端点返回 enabled: true
+5. 确认模型解锁端点返回 `enabled: false`（v9.9.528+ 默认禁用，模型列表纯透传）
 6. 确认 source.js 包含 `_agGemini37Compat` require 和 hook（模型改写自带）
 7. 发消息确认代理正常（模型改写自动生效，不需要 old-compat-manager）
 
@@ -163,7 +162,7 @@ node scripts/build-vsix.mjs zk-proxy-pro
 ## 6. 使用流程（用户视角）
 
 ### 6.1 日常使用
-什么都不用管，直接打开 IDE 用。代理启动后 autoModelUnlock 自动解锁模型目录，提示词注入、摘要剔除、标题汉化全部自动生效。
+什么都不用管，直接打开 IDE 用。提示词注入、摘要剔除、标题汉化、模型改写/动态映射全部自动生效；模型解锁默认禁用（账号本身返回全量模型），模型列表纯透传。
 
 ### 6.2 重新安装 IDE 后（必须执行 old-compat-manager）
 
@@ -183,7 +182,7 @@ old-compat-manager 改的是 **IDE 安装目录**里的文件（Bridge、版本�
 
 1. 安装新插件 VSIX
 2. 重启 IDE
-3. 模型改写、提示词注入、摘要剔除、模型解锁全部自动生效
+3. 模型改写、提示词注入、摘要剔除全部自动生效；模型解锁默认禁用（无需操作）
 
 > ⚠️ 只有当你**手动用项目源码覆盖已安装的 source.js** 时，才需要确认覆盖没有破坏 `_agGemini37Compat` 的 require 和 hook。正常安装 VSIX 不需要任何额外操作。
 
@@ -195,8 +194,8 @@ old-compat-manager 改的是 **IDE 安装目录**里的文件（Bridge、版本�
 | 会话标题简体中文 | 本插件 | 自动 |
 | 文件上下文元信息 | 本插件 | 自动 |
 | 历史摘要剔除 | 本插件 | 自动 |
-| 模型解锁（全量模型目录） | 本插件 | 自动（autoModelUnlock） |
-| 流式响应结束保险（防 Generating 卡死） | 本插件 | 自动（end/close/30s空闲超时三重保险） |
+| 模型解锁（全量模型目录） | 本插件 | 默认禁用（账号本身返回全量）；权限受限时手动 POST 开启 |
+| 流式响应结束保险（防 Generating 卡死） | 本插件 | 自动（end/close 双保险 + 仅 SSE 的 120s 空闲超时，不误杀长任务） |
 | 模型改写 / 动态映射（gemini-2.5-pro→实际模型） | 本插件 | 自动（从 URL 提取实际模型名，支持未来新模型） |
 | Bridge 部署（LS 走本地代理） | old-compat-manager | 手动执行一次 |
 | 版本伪装（ideVersion=2.5.5） | old-compat-manager | 手动执行一次 |
