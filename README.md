@@ -32,6 +32,7 @@
    - 从请求 URL `/v1beta/models/{model}:generateContent` 动态提取实际模型名
    - 官方发布任何新模型（3.9/4.0/4.1）自动适配，无需改映射代码
    - URL 提取失败时回退到默认 `gemini-3.8-flash-high`
+   - **v9.9.529+ 推理强度 High 提升**：对主对话请求将 Fast 版被压低的 `thinkingConfig.thinkingBudget` 从 1024(Low) 改为 -1(High/动态思考)，仅作用于主对话，不动 lite/标题摘要附属请求
 
 8. **性能优化**
    - keepAlive false，避免外网代理隧道连接复用问题（上游官方 H2 session 独立复用）

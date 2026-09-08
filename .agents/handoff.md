@@ -1,8 +1,8 @@
-# 最新接续状态 (2026-09-05 12:53)
+# 最新接续状态 (2026-09-08)
 
 ## 核心进展
-- 当前稳定版本 **zk-agent.zk-proxy-pro@9.9.528**，已安装、已构建 VSIX(518.58KB)、已 push 并发布 GitHub Release `zk-proxy-pro-v9.9.528`，代理实测正常、可正常发送请求。
-- 核心文件：`plugins/zk-proxy-pro/vendor/bundled-origin/source.js`（代理主体）、`plugins/zk-proxy-pro/extension.js`（扩展入口）、`plugins/zk-proxy-pro/vendor/bundled-origin/_ag-gemini37-compat.cjs`（模型改写/动态映射）。
+- 当前稳定版本 **zk-agent.zk-proxy-pro@9.9.529**，已构建 VSIX(516.42KB)、已提交。核心修复：Gemini 3.8 Flash Fast 版推理强度从 Low(thinkingBudget=1024) 提升至 High(thinkingBudget=-1 动态思考)，用户实测模型自报 high 推理。
+- 核心文件：`plugins/zk-proxy-pro/vendor/bundled-origin/source.js`（代理主体）、`plugins/zk-proxy-pro/extension.js`（扩展入口）、`plugins/zk-proxy-pro/vendor/bundled-origin/_ag-gemini37-compat.cjs`（模型改写/动态映射 + 推理强度 High 提升 _agLiftThinking）。
 
 ## 核心动机与背景 (Motivation & Background)
 - 用户目标：插件稳定可用 + 性能优秀；只保留「提示词注入 / 会话标题简体中文 / IDE 文件上下文元信息 / 历史摘要剔除」，模型相关兼容交给 old-compat-manager。
@@ -12,6 +12,7 @@
 - 关键事实（用户确认）：账号登录后无论免费还是 VIP，官方本身就返回全量模型列表；模型过滤在另一项目做，故本插件不需要模型解锁。
 
 ## 关键设计与实现 (Implementation & Decisions)
+- **v9.9.529 Gemini 3.8 Flash 推理强度提升至 High**：Fast 版模型被 LS 写入 `request.generationConfig.thinkingConfig.thinkingBudget=1024`（Low 档），模型自报 effort level 0.25。私有端点 `/v1internal` 为旧版 schema，只认 `thinkingConfig.thinkingBudget`（token 数），不认 Gemini 3 新字段 `thinkingLevel`（加了会 400 INVALID_ARGUMENT）。修复：`_ag-gemini37-compat.cjs` 新增 `_agLiftThinking()`，对主对话请求（顶层 model 为 LS 占位符 `gemini-2.5-pro`）将 thinkingBudget 从 1024 提升为 **-1**（官方定义：动态思考 = 模型按复杂度自行决定 = High 满载）。仅改主对话，不动 lite/标题摘要附属请求。用户实测模型自报 high 推理。单测覆盖 4 个边界用例（主对话提升/非主对话不修改/无 thinkingConfig 安全/request 缺失安全）。
 - **v9.9.528 模型解锁默认禁用**：`_isModelUnlockEnabled()` 标记文件缺失时由默认 true 改为 false；仅显式写 "1"/"true"/"enabled" 才启用。移除 proxyStart 后的 autoModelUnlock 自动调用并删除该死代码函数。GetUserSettings/GetUserStatus 从「缓冲-解析-重写」变回流式直透。保留 `/origin/model_unlock` 手动端点，账号权限受限时 POST `{enabled:true}` 可恢复。
 - **历史澄清**：v9.9.519 的 Failed to send 真因是模型改写被冲掉（当时在 old-compat-manager，覆盖已安装 source.js 冲掉注入），与模型解锁无关——默认值本就是启用，删 autoModelUnlock 不改变解锁状态。
 - **v9.9.527 流式结束保险修正**：空闲超时仅对 `text/event-stream`(SSE) 生效，阈值 30s→120s，避免大模型执行长时间终端任务(编译/npm install/测试)时被误杀；非流式响应只靠 end/close 双保险（上游真正结束才触发，不会误杀）。
@@ -21,6 +22,7 @@
 - **性能结论（已向用户说明，勿再做无意义代理侧优化）**：代理侧每请求总开销 <10ms（内存操作 + 2 个小配置文件同步读约 0.1-1ms）；上游 H2 session 已通过 `_h2Sessions` 复用，不重复 TCP/TLS 握手；keepAlive:false 仅作用于外网 HTTP 代理 CONNECT 隧道(_OriginTunnelAgent)，直连不影响。首字延迟 200-2000ms 的瓶颈在官方服务器推理与网络，代理无法压缩。
 
 ## 待办事项 (Next Steps)
+- [x] v9.9.529 推理强度 High 提升已完成并验证（thinkingBudget 1024→-1，模型自报 high）。
 - [ ] 当前版本功能已闭环，无必须修改项。用户在 IDE 模型选择器确认所有模型正常显示/可选/可对话即可（已确认能正常发送）。
 - [ ] 可选（用户未确认，勿擅自动手）：在代理里加「收到请求→转发上游→首字节→结束」分阶段耗时埋点，用真实数据定位首字延迟发生在哪一段。
 - [ ] 若未来发现模型变灰/消失（账号权限受限场景），POST `http://127.0.0.1:8937/origin/model_unlock` body `{"enabled":true}` 手动恢复模型解锁。
@@ -29,7 +31,7 @@
 - 目录: D:\Desktop\Super-File\AI-IDE\AI\反重力\Antigravity-Injection
 - 姊妹项目: D:\Desktop\Super-File\AI-IDE\AI\反重力\antigravity-old-compat-manager
 - IDE 安装根: D:\Antigravity（启动 `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000`）
-- 扩展目录: C:\Users\Administrator\.antigravity\extensions\zk-agent.zk-proxy-pro-9.9.528\
+- 扩展目录: C:\Users\Administrator\.antigravity\extensions\zk-agent.zk-proxy-pro-9.9.529\（安装 9.9.529 VSIX 后；当前调试期直接修改 9.9.528 目录中的 compat 文件，重载窗口即生效）
 - 代理端口 8937；健康检查 http://127.0.0.1:8937/origin/ping（看 self_file 指向版本目录）；解锁状态 http://127.0.0.1:8937/origin/model_unlock（当前 enabled:false）
 - Bridge: D:\Antigravity\resources\app\dao-one-ls-agent-pro.cjs（AGENT_PRO_ID=zk-agent.zk-proxy-pro，由 old-compat-manager 部署）
 - GitHub: https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection ；外网用代理 http://127.0.0.1:51081；gh CLI 需 `Remove-Item Env:GITHUB_TOKEN` 切到 keyring token（带 repo scope）才能建 release

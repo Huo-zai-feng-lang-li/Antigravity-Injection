@@ -18,7 +18,7 @@
 | 历史摘要剔除 | `source.js` `_stripConvSummaries` | 剔除 `<conversation_summaries>` 标签块，消除认知漂移 |
 | 模型解锁（全量模型目录） | `source.js` MODEL_UNLOCK | 具备拦截 GetUserSettings 注入全量目录能力；**v9.9.528+ 默认禁用走纯透传**（账号登录后免费/VIP 官方本身返回全量模型，模型过滤在 old-compat-manager），仅账号权限受限时手动 POST /origin/model_unlock 开启 |
 | 流式响应结束保险 | `source.js` stream-idle | end/close 双保险（所有响应）+ 120s 空闲超时（**仅 text/event-stream**），防 Generating 卡死且不误杀长时间终端任务（v9.9.527） |
-| 模型改写 / 动态映射 | `_ag-gemini37-compat.cjs` + `source.js` hook | v9.9.524+ 从 old-compat-manager 移入。从 URL 提取实际模型名，改写 LS 占位符 gemini-2.5-pro。支持未来新模型自动适配 |
+| 模型改写 / 动态映射 | `_ag-gemini37-compat.cjs` + `source.js` hook | v9.9.524+ 从 old-compat-manager 移入。从 URL 提取实际模型名，改写 LS 占位符 gemini-2.5-pro。支持未来新模型自动适配。**v9.9.529+ 同时提升主对话推理强度**：`_agLiftThinking()` 将 Fast 版被压低的 `thinkingConfig.thinkingBudget` 从 1024(Low) 改为 -1(High/动态)，仅作用于主对话请求，不动 lite/标题摘要附属请求 |
 | 性能优化 | `source.js` | keepAlive false、TTL 缓存、短路预筛 |
 
 ### 1.2 本插件绝对不做（兼容层 → old-compat-manager）
@@ -155,6 +155,8 @@ node scripts/build-vsix.mjs zk-proxy-pro
 4. 确认扩展加载为 `zk-agent.zk-proxy-pro`
 5. 确认模型解锁端点返回 `enabled: false`（v9.9.528+ 默认禁用，模型列表纯透传）
 6. 确认 source.js 包含 `_agGemini37Compat` require 和 hook（模型改写自带）
+7. 确认 `_ag-gemini37-compat.cjs` 包含 `_agLiftThinking`（v9.9.529+ 推理强度 High 提升：主对话 thinkingBudget 1024→-1）
+8. 运行 `node --test test/gemini-compat.test.js`，确认 11 个用例全部通过（含 4 个 _agLiftThinking 边界用例）
 7. 发消息确认代理正常（模型改写自动生效，不需要 old-compat-manager）
 
 ---

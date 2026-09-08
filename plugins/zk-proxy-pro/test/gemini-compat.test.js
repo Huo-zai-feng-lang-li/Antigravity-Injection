@@ -67,3 +67,48 @@ test("健壮性: 非 Buffer / 非法 JSON 原样返回", () => {
   assert.equal(compat.rewriteRequestBody(broken), broken);
 });
 
+// v9.9.529 · 推理强度 High 提升 (_agLiftThinking)
+test("推理强度提升: 主对话请求 thinkingBudget 1024 -> -1(High/动态)", () => {
+  const input = buf({
+    model: SOURCE_MODEL,
+    request: {
+      generationConfig: {
+        thinkingConfig: { thinkingBudget: 1024 },
+      },
+    },
+  });
+  const out = parse(compat.rewriteRequestBody(input, "/v1internal:streamGenerateContent?alt=sse"));
+  assert.equal(out.model, DEFAULT_TARGET);
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+});
+
+test("推理强度提升: 非主对话请求(lite/标题)不修改 thinkingBudget", () => {
+  const input = buf({
+    model: "gemini-3.1-flash-lite",
+    request: {
+      generationConfig: {
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    },
+  });
+  const out = compat.rewriteRequestBody(input, null);
+  assert.equal(out, input); // 未修改，返回原 Buffer 引用
+  assert.equal(parse(out).request.generationConfig.thinkingConfig.thinkingBudget, 0);
+});
+
+test("推理强度提升: 主对话无 thinkingConfig 时不报错且 model 仍改写", () => {
+  const input = buf({
+    model: SOURCE_MODEL,
+    request: { generationConfig: { temperature: 0.7 } },
+  });
+  const out = parse(compat.rewriteRequestBody(input, null));
+  assert.equal(out.model, DEFAULT_TARGET);
+  assert.equal(out.request.generationConfig.temperature, 0.7);
+});
+
+test("推理强度提升: 主对话 request 为 null/缺失时安全回退", () => {
+  const input = buf({ model: SOURCE_MODEL });
+  const out = parse(compat.rewriteRequestBody(input, null));
+  assert.equal(out.model, DEFAULT_TARGET);
+});
+
