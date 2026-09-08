@@ -2,6 +2,21 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+## v9.9.529 · Gemini 3.8 Flash 推理强度提升至 High（thinkingBudget 1024 → -1）
+
+**问题**：Gemini 3.8 Flash (High) 为限时 Fast 版，LS 在请求体中写入 `request.generationConfig.thinkingConfig.thinkingBudget = 1024`（Low 档 token 预算），导致模型自报 effort level 0.25（Low），复杂任务思考深度不足。
+
+**根因链**：
+1. Antigravity 私有端点 `/v1internal:streamGenerateContent` 为旧版 schema，只认 `thinkingConfig.thinkingBudget`（token 数），**不认 Gemini 3 新字段 `thinkingLevel`**（加了会 400 INVALID_ARGUMENT）
+2. LS 给 Fast 版模型固定写入 1024（Low），覆盖了 Gemini 3 默认的 high 动态思考
+3. IDE 客户端代码无任何 thinking/effort 参数，无法从 UI 关闭 Fast 或切换档位
+
+**修复**：在 `_ag-gemini37-compat.cjs` 的 `rewriteRequestBody` 中新增 `_agLiftThinking`：对主对话请求（顶层 model 为 LS 占位符 `gemini-2.5-pro`），将 `thinkingConfig.thinkingBudget` 从 1024 提升为 **-1**。官方定义 `thinkingBudget=-1` 为动态思考（模型按任务复杂度自行决定，等同 High 满载），且字段为端点认识的旧版字段，不会 400。仅改主对话，不动 lite/标题摘要等附属请求。
+
+**验证**：重载窗口后模型自报推理强度为 high/动态，复杂任务思考深度显著提升；请求不再报 400。
+
+**影响范围**：仅影响经插件代理的 Gemini 主对话请求（LS 占位符模型），外接 API 渠道、Claude、非 Gemini 请求不受影响；thinkingBudget 改动仅作用于请求体转发，不修改模型列表、提示词注入或其他代理逻辑。
+
 ## v9.9.528 · 模型解锁默认禁用 · 模型列表请求纯透传降延迟
 
 **背景**：账号登录后官方服务器本身返回全量模型列表，模型解锁（拦截 GetUserSettings 合并 108 模型目录、拦截 GetUserStatus 剥除 Pro 锁标记）属于多余操作，且需要缓冲整个响应再解析重写，增加延迟。

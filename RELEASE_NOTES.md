@@ -10,11 +10,24 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`zk-proxy-pro`** | `v9.9.528` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁(可选纯透传) + 流式120s保险 + 模型改写动态映射 + 命名统一 zk-proxy-pro |
+| **`zk-proxy-pro`** | `v9.9.529` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁(可选纯透传) + 流式120s保险 + 模型改写动态映射 + 命名统一 zk-proxy-pro + Gemini推理强度High提升(thinkingBudget -1) |
 
 ---
 
 ## 📜 版本发布与 Bug 修复迭代日志
+
+### 🚀 v9.9.529 (2026-09-08)
+- **修复类型**：推理强度提升 (Gemini 3.8 Flash Fast 版 Low → High)
+- **问题描述**：Gemini 3.8 Flash (High) 为限时 Fast 版，LS 在请求体写入 `thinkingConfig.thinkingBudget = 1024`（Low 档），模型自报 effort level 0.25，复杂任务思考深度不足。
+- **根因分析**：
+  1. Antigravity 私有端点 `/v1internal` 为旧版 schema，只认 `thinkingConfig.thinkingBudget`（token 数），不认 Gemini 3 新字段 `thinkingLevel`（加了会 400）
+  2. LS 给 Fast 版固定写入 1024（Low），覆盖 Gemini 3 默认 high 动态思考
+  3. IDE 客户端无 thinking/effort 参数，Fast 为模型条目自带属性不可关闭
+- **修复方案**：`_ag-gemini37-compat.cjs` 新增 `_agLiftThinking`，对主对话请求将 `thinkingBudget` 从 1024 提升为 **-1**（官方动态思考 = High 满载）。仅改主对话，不动 lite/标题摘要附属请求。
+- **验证结果**：重载窗口后模型自报推理强度 high/动态，请求无 400，复杂任务思考深度显著提升。
+- **影响范围**：仅影响经插件代理的 Gemini 主对话请求（LS 占位符模型），外接 API、Claude、非 Gemini 请求不受影响。
+
+---
 
 ### 🚀 v9.9.528 (2026-09-04)
 - **优化类型**：性能优化 (模型解锁默认禁用 · 纯透传降首字延迟)
