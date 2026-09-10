@@ -4,6 +4,34 @@
 
 ---
 
+
+## 0. extension.js 换行符硬性规则（最高优先级 · 血泪教训）
+
+> **2026-09-10 事故复盘**：`E:\Antigravity\resources\app\extensions\antigravity\dist\extension.js` 被文本编辑器打开并保存后，换行符从 LF（`\n`）被自动转换成 CRLF（`\r\n`），全文仅 24 个换行符全部被转换，文件体积正好多 24 字节。该文件是 webpack 单文件打包，内部锚点匹配、source map 偏移、模块 ID 映射均依赖精确字节位置，CRLF 化后导致 `agentSessions` 服务注册失败，IDE 对话框点发送闪一下回弹、无法发送消息给模型。
+
+### 0.1 绝对禁止
+
+- ❌ **禁止用任何文本编辑器（VS Code / Notepad++ / 记事本 / Sublime 等）打开 `extension.js` 并按 Ctrl+S 保存**。查看可以，保存绝对不行。
+- ❌ 禁止用 `Set-Content` / `Out-File` / `Add-Content` 等 PowerShell cmdlet 写入 `extension.js`（这些 cmdlet 会自动转换换行符）。
+- ❌ 禁止在未归一化换行符的情况下对 `extension.js` 做字符串替换。
+
+### 0.2 必须遵守
+
+- ✅ 写入 `extension.js` **必须**使用 `[IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))`，且写入前必须调用 `ConvertTo-LfLineEndings` 归一化为 LF。
+- ✅ 本项目 `Write-Utf8Atomic` 函数已提供 `-ForceLF` 开关，写入 `extension.js` 时**必须**传 `-ForceLF`。
+- ✅ `Test-RestartSafeExtensionContent` 和 `ConvertTo-RestartSafeExtensionContent` 函数入口已自动归一化 LF，新增同类函数必须遵循同样模式。
+- ✅ 读取 `extension.js` 用 `Get-Content -Raw` 或 `[IO.File]::ReadAllText`，禁止用逐行读取后拼接（会改变换行符）。
+
+### 0.3 验证
+
+修改 `extension.js` 相关代码后，必须验证：
+1. 产出的 `extension.js` 文件不包含 `\r\n`（可用 `Select-String` 或字节检查）。
+2. 产出的 `extension.js` SHA256 与 `profiles\local-generated.json` 中对应模式的 `targetExtensionSha256` 一致。
+3. IDE 启动后日志中无 `xoe depends on UNKNOWN service agentSessions` 错误。
+
+---
+
+
 ## 1. 项目定位与分工边界（最高优先级）
 
 本项目是 **Antigravity IDE 提示词注入插件**，发布者 `zk-agent.zk-proxy-pro`。

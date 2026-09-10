@@ -1,0 +1,13 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+[*.{js,mjs,cjs,json,md,html,css}]
+end_of_line = lf
+
+[*.{ps1,psm1,cmd,bat}]
+end_of_line = crlf
