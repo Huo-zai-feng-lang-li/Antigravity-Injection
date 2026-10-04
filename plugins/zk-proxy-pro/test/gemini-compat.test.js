@@ -112,3 +112,96 @@ test("推理强度提升: 主对话 request 为 null/缺失时安全回退", () 
   assert.equal(out.model, DEFAULT_TARGET);
 });
 
+// v9.9.529+ · renderer 模型选择旁路 (_agReadSelected / __agtarget 落盘)
+const fs = require("node:fs");
+const capDir = path.join(path.dirname(compatPath), "_agcap");
+const stateFile = path.join(capDir, "_ag-selected.json");
+function writeState(obj) {
+  fs.mkdirSync(capDir, { recursive: true });
+  fs.writeFileSync(stateFile, JSON.stringify(obj));
+}
+function clearState() {
+  try { fs.rmSync(stateFile, { force: true }); } catch {}
+  try { fs.rmdirSync(capDir); } catch {} // 仅当目录为空时移除，消除测试残留；非空则保留
+}
+function placeholderBody(sessionId) {
+  const request = { generationConfig: { thinkingConfig: { thinkingBudget: 1024 } } };
+  if (sessionId) request.sessionId = sessionId;
+  return buf({ model: SOURCE_MODEL, request });
+}
+
+test("旁路: 新鲜 last 选择 Claude medium 时占位符改写为该 uid", () => {
+  try {
+    writeState({ last: { uid: "claude-sonnet-5-5-medium", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "claude-sonnet-5-5-medium");
+  } finally { clearState(); }
+});
+
+test("旁路: bySid 会话记录优先于全局 last", () => {
+  try {
+    writeState({
+      last: { uid: "claude-sonnet-5-5-high", ts: Date.now() },
+      bySid: { sessA: { uid: "claude-opus-5-5-low", ts: Date.now() } },
+    });
+    const out = parse(compat.rewriteRequestBody(placeholderBody("sessA"), null));
+    assert.equal(out.model, "claude-opus-5-5-low");
+  } finally { clearState(); }
+});
+
+test("旁路: sid 无记录时回退全局 last", () => {
+  try {
+    writeState({
+      last: { uid: "claude-opus-5-5-high", ts: Date.now() },
+      bySid: { sessA: { uid: "claude-opus-5-5-low", ts: Date.now() } },
+    });
+    const out = parse(compat.rewriteRequestBody(placeholderBody("sessB"), null));
+    assert.equal(out.model, "claude-opus-5-5-high");
+  } finally { clearState(); }
+});
+
+test("旁路: 超过新鲜窗口(120min)回退默认模型", () => {
+  try {
+    writeState({ last: { uid: "claude-sonnet-5-5-high", ts: Date.now() - 121 * 60 * 1000 }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
+    assert.equal(out.model, DEFAULT_TARGET);
+  } finally { clearState(); }
+});
+
+test("旁路: 状态文件缺失/损坏时安全回退默认模型", () => {
+  clearState();
+  const out1 = parse(compat.rewriteRequestBody(placeholderBody(), null));
+  assert.equal(out1.model, DEFAULT_TARGET);
+  try {
+    fs.mkdirSync(capDir, { recursive: true });
+    fs.writeFileSync(stateFile, "{ not json");
+    const out2 = parse(compat.rewriteRequestBody(placeholderBody(), null));
+    assert.equal(out2.model, DEFAULT_TARGET);
+  } finally { clearState(); }
+});
+
+test("旁路: URL 显式模型名优先于旁路选择", () => {
+  try {
+    writeState({ last: { uid: "claude-sonnet-5-5-high", ts: Date.now() }, bySid: {} });
+    const url = "/v1beta/models/gemini-4.0-pro:streamGenerateContent?alt=sse";
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), url));
+    assert.equal(out.model, "gemini-4.0-pro");
+  } finally { clearState(); }
+});
+
+test("旁路: 未来时间戳(时钟异常/伪造)回退默认模型", () => {
+  try {
+    writeState({ last: { uid: "claude-sonnet-5-5-high", ts: Date.now() + 60 * 60 * 1000 }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
+    assert.equal(out.model, DEFAULT_TARGET);
+  } finally { clearState(); }
+});
+
+test("旁路: ts 为非数字字符串时安全回退默认模型", () => {
+  try {
+    writeState({ last: { uid: "claude-sonnet-5-5-high", ts: "not-a-number" }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
+    assert.equal(out.model, DEFAULT_TARGET);
+  } finally { clearState(); }
+});
+

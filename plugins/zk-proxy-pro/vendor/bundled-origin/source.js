@@ -6899,6 +6899,58 @@ const _mainHandler = async (req, res) => {
   req.on("error", (e) => log(`#${rid} req err: ${e.message}`));
   res.on("error", (e) => log(`#${rid} res err: ${e.message}`));
   try {
+    // === _ag 模型选择旁路（renderer→zk；CSP connect-src 已放行 http://127.0.0.1:*）===
+    try {
+      const _agU = new URL(req.url, "http://127.0.0.1");
+      if (_agU.pathname === "/__agtarget") {
+        const _agCors = {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+          "Access-Control-Allow-Headers": "*",
+          "Access-Control-Max-Age": "86400",
+        };
+        if (req.method === "OPTIONS") { res.writeHead(204, _agCors); res.end(); return; }
+        const _agFs = require("fs");
+        const _agPath = require("path");
+        const _agDir = _agPath.join(__dirname, "_agcap");
+        try { _agFs.mkdirSync(_agDir, { recursive: true }); } catch (_agMk) {}
+        const _agFile = _agPath.join(_agDir, "_ag-selected.json");
+        const _agRec = {
+          uid: _agU.searchParams.get("uid") || "",
+          label: _agU.searchParams.get("label") || "",
+          sid: _agU.searchParams.get("sid") || "",
+          ts: Date.now(),
+        };
+        // 防御：uid 为空（异常/探测请求）不得覆盖既有选择，直接 400
+        if (!_agRec.uid) {
+          res.writeHead(400, Object.assign({ "Content-Type": "application/json" }, _agCors));
+          res.end(JSON.stringify({ ok: false, error: "missing uid" }));
+          return;
+        }
+        let _agState = { last: null, bySid: {} };
+        try {
+          const _agPrev = JSON.parse(_agFs.readFileSync(_agFile, "utf8"));
+          if (_agPrev && typeof _agPrev === "object") _agState = _agPrev;
+          if (!_agState.bySid || typeof _agState.bySid !== "object") _agState.bySid = {};
+        } catch (_agRead) {}
+        _agState.last = _agRec;
+        if (_agRec.sid) _agState.bySid[_agRec.sid] = _agRec;
+        // 原子落盘：同目录 tmp + rename，避免崩溃中途留下截断 JSON
+        const _agTmp = _agFile + ".tmp-" + process.pid;
+        _agFs.writeFileSync(_agTmp, JSON.stringify(_agState));
+        _agFs.renameSync(_agTmp, _agFile);
+        res.writeHead(200, Object.assign({ "Content-Type": "application/json" }, _agCors));
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+    } catch (_agSideErr) {
+      try {
+        res.writeHead(500, { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: String((_agSideErr && _agSideErr.message) || _agSideErr) }));
+      } catch (_agResErr) {}
+      return;
+    }
+    // === end _ag 模型选择旁路 ===
     // 1. 控制面
     if (req.url && req.url.startsWith("/origin/")) {
       if (handleControl(req, res)) return;
