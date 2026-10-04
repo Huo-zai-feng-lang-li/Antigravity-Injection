@@ -10,11 +10,15 @@
 
 | 模块名称 | 当前版本 | 架构状态 |
 |---|---|---|
-| **`zk-proxy-pro`** | `v9.9.529` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁(可选纯透传) + 流式120s保险 + 模型改写动态映射 + 命名统一 zk-proxy-pro + Gemini推理强度High提升(thinkingBudget -1) |
+| **`zk-proxy-pro`** | `v9.9.530` | 提示词注入层 + 标题汉化 + 文件上下文 + 摘要剔除 + 模型解锁(可选纯透传) + 流式120s保险 + 模型改写动态映射 + 命名统一 zk-proxy-pro + Gemini推理强度High提升(thinkingBudget -1) |
 
 ---
 
 ## 📜 版本发布与 Bug 修复迭代日志
+
+### 🚀 v9.9.530 (2026-09-04)
+- **修复类型**：Bug 修复 (多轮对话上下文误伤修复) + 垃圾代码清理
+- **更新描述**：unlock Claude 5.5 six tiers and Gemini 3.8 via model-selection bypass
 
 ### 🚀 v9.9.529 (2026-09-08)
 - **修复类型**：推理强度提升 (Gemini 3.8 Flash Fast 版 Low → High)

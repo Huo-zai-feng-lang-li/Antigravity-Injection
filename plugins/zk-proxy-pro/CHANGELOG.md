@@ -2,6 +2,8 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+v9.9.530 · unlock Claude 5.5 six tiers and Gemini 3.8 via model-selection bypass
+
 ## v9.9.529 · Gemini 3.8 Flash 推理强度提升至 High（thinkingBudget 1024 → -1）
 
 **问题**：Gemini 3.8 Flash (High) 为限时 Fast 版，LS 在请求体中写入 `request.generationConfig.thinkingConfig.thinkingBudget = 1024`（Low 档 token 预算），导致模型自报 effort level 0.25（Low），复杂任务思考深度不足。
