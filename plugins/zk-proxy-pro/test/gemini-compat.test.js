@@ -3,8 +3,16 @@
 // v9.9.525 · Gemini 动态模型改写单测 (_ag-gemini37-compat.cjs)
 // 覆盖: URL 提取模型名、LS 占位符动态替换、默认回退、非占位符不误伤、健壮性
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+
+// 测试隔离：必须在 require 之前设置，让 compat 把旁路落盘重定向到临时目录，
+// 避免在装有 IDE 的开发机上跑测试时覆盖/删除用户真实的 _agcap/_ag-selected.json。
+const os = require("node:os");
+const testStateDir = fs.mkdtempSync(path.join(os.tmpdir(), "ag-compat-test-"));
+const testStateFile = path.join(testStateDir, "_ag-selected.json");
+process.env.AG_SELECTED_FILE = testStateFile;
 
 const compatPath = path.join(
   __dirname,
@@ -168,16 +176,14 @@ test("推理强度提升: 主对话 request 为 null/缺失时安全回退", () 
 });
 
 // v9.9.529+ · renderer 模型选择旁路 (_agReadSelected / __agtarget 落盘)
-const fs = require("node:fs");
-const capDir = path.join(path.dirname(compatPath), "_agcap");
-const stateFile = path.join(capDir, "_ag-selected.json");
+// 落盘路径已通过顶部 process.env.AG_SELECTED_FILE 重定向到临时目录（不碰真实运行态）
+const stateFile = testStateFile;
 function writeState(obj) {
-  fs.mkdirSync(capDir, { recursive: true });
+  fs.mkdirSync(testStateDir, { recursive: true });
   fs.writeFileSync(stateFile, JSON.stringify(obj));
 }
 function clearState() {
   try { fs.rmSync(stateFile, { force: true }); } catch {}
-  try { fs.rmdirSync(capDir); } catch {} // 仅当目录为空时移除，消除测试残留；非空则保留
 }
 function placeholderBody(sessionId) {
   const request = { generationConfig: { thinkingConfig: { thinkingBudget: 1024 } } };
@@ -228,11 +234,63 @@ test("旁路: 状态文件缺失/损坏时安全回退默认模型", () => {
   const out1 = parse(compat.rewriteRequestBody(placeholderBody(), null));
   assert.equal(out1.model, DEFAULT_TARGET);
   try {
-    fs.mkdirSync(capDir, { recursive: true });
+    fs.mkdirSync(testStateDir, { recursive: true });
     fs.writeFileSync(stateFile, "{ not json");
     const out2 = parse(compat.rewriteRequestBody(placeholderBody(), null));
     assert.equal(out2.model, DEFAULT_TARGET);
   } finally { clearState(); }
+});
+
+// 2026-10-24 · 补审阅缺口：URL 显式命中档位表时 thinkingBudget 也要按表设置
+test("动态档位: URL 显式 gemini-3.8-flash-medium 时 thinkingBudget = 4000", () => {
+  clearState();
+  const url = "/v1beta/models/gemini-3.8-flash-medium:streamGenerateContent?alt=sse";
+  const out = parse(compat.rewriteRequestBody(placeholderBody(), url));
+  assert.equal(out.model, "gemini-3.8-flash-medium");
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
+});
+
+test("动态档位: URL 显式 gemini-3.8-flash-low 时 thinkingBudget = 1000", () => {
+  clearState();
+  const url = "/v1beta/models/gemini-3.8-flash-low:streamGenerateContent?alt=sse";
+  const out = parse(compat.rewriteRequestBody(placeholderBody(), url));
+  assert.equal(out.model, "gemini-3.8-flash-low");
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 1000);
+});
+
+// 2026-10-24 · 直测查表函数（已导出），覆盖"表内/表外/无字段"三态
+test("动态档位直测: _agApplyThinkingBudget 表内取值正确", () => {
+  const mk = () => ({ request: { generationConfig: { thinkingConfig: { thinkingBudget: 1024 } } } });
+  const cases = [
+    ["gemini-3.8-flash-high", -1],
+    ["gemini-3.8-flash-medium", 4000],
+    ["gemini-3.8-flash-low", 1000],
+    ["gemini-3.8-flash-tiered", -1],
+  ];
+  for (const [uid, expect] of cases) {
+    const req = mk();
+    assert.equal(compat._agApplyThinkingBudget(req, uid), true);
+    assert.equal(req.request.generationConfig.thinkingConfig.thinkingBudget, expect, uid);
+  }
+});
+
+test("动态档位直测: _agApplyThinkingBudget 表外模型回退 -1", () => {
+  const req = { request: { generationConfig: { thinkingConfig: { thinkingBudget: 1024 } } } };
+  assert.equal(compat._agApplyThinkingBudget(req, "claude-opus-5-5-high"), true);
+  assert.equal(req.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+  const req2 = { request: { generationConfig: { thinkingConfig: { thinkingBudget: 1024 } } } };
+  assert.equal(compat._agApplyThinkingBudget(req2, "some-future-model-x"), true);
+  assert.equal(req2.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+});
+
+test("动态档位直测: _agApplyThinkingBudget 无 thinkingBudget 字段时不新增且返回 false", () => {
+  const req = { request: { generationConfig: { thinkingConfig: {} } } };
+  assert.equal(compat._agApplyThinkingBudget(req, "gemini-3.8-flash-low"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(req.request.generationConfig.thinkingConfig, "thinkingBudget"), false);
+  // thinkingConfig 缺失
+  assert.equal(compat._agApplyThinkingBudget({ request: { generationConfig: {} } }, "gemini-3.8-flash-low"), false);
+  // request 缺失
+  assert.equal(compat._agApplyThinkingBudget({}, "gemini-3.8-flash-low"), false);
 });
 
 test("旁路: URL 显式模型名优先于旁路选择", () => {

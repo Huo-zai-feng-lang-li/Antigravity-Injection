@@ -9,6 +9,10 @@ const SOURCE_MODEL = "gemini-2.5-pro";
 const DEFAULT_TARGET_MODEL = "gemini-3.8-flash-high";
 // renderer 模型选择旁路落盘文件相对目录（与 source.js 的 /__agtarget 路由一致）
 const SELECTED_STATE_FILE = path.join("_agcap", "_ag-selected.json");
+// 测试隔离：允许通过环境变量把落盘路径重定向到临时目录，
+// 避免在装有 IDE 的开发机上跑单测时覆盖/删除用户真实的选择记录。
+// 生产环境不设该变量，行为完全不变。
+const AG_SELECTED_FILE_OVERRIDE = process.env.AG_SELECTED_FILE || null;
 // 旁路选择的新鲜窗口：超过该时长未重新选择则回退默认模型（毫秒）
 const SELECTED_FRESH_MS = 120 * 60 * 1000;
 
@@ -54,6 +58,9 @@ function extractModelFromUrl(reqUrl) {
  * 仅对主对话请求（顶层 model 为 LS 占位符 gemini-2.5-pro）生效，
  * 不动 lite/标题摘要等附属请求。
  */
+// ⚠️ 维护警告：官方发布带档位的新模型（如 Gemini 3.9/4.x 的 medium/low）时，
+// 必须在此表中同步添加对应 uid，否则会落到默认 -1（High 满载）而被"抹平档位"。
+// 取值以官方 fetchAvailableModels 元信息的 thinkingBudget 字段为准。
 const THINKING_BUDGET_BY_MODEL = Object.freeze({
   "gemini-3.8-flash-high": -1,
   "gemini-3.8-flash-medium": 4000,
@@ -106,7 +113,7 @@ function _agApplyThinkingBudget(request, targetModel) {
  */
 function _agReadSelected(request) {
   try {
-    const f = path.join(__dirname, SELECTED_STATE_FILE);
+    const f = AG_SELECTED_FILE_OVERRIDE || path.join(__dirname, SELECTED_STATE_FILE);
     const st = JSON.parse(fs.readFileSync(f, "utf8"));
     if (!st || typeof st !== "object") return null;
     const sid =
@@ -126,7 +133,7 @@ function _agReadSelected(request) {
 }
 
 /**
- * 动态改写请求体中的模型名，并提升推理强度到 High。
+ * 动态改写请求体中的模型名，并按目标档位设置推理强度。
  *
  * 如果请求体里的 model 是 LS 占位符 (gemini-2.5-pro)，则按以下优先级
  * 解析真实目标模型并改写：
@@ -163,7 +170,9 @@ module.exports = {
   SOURCE_MODEL,
   DEFAULT_TARGET_MODEL,
   SELECTED_FRESH_MS,
+  THINKING_BUDGET_BY_MODEL,
   extractModelFromUrl,
   _agReadSelected,
+  _agApplyThinkingBudget,
   rewriteRequestBody,
 };
