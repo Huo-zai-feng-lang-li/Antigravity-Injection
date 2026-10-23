@@ -82,6 +82,61 @@ test("推理强度提升: 主对话请求 thinkingBudget 1024 -> -1(High/动态)
   assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
 });
 
+// 2026-10-23 · 按目标 uid 动态设置 thinkingBudget（原无条件 -1 会抹平 Medium/Low 档位）
+test("动态档位: 旁路选 gemini-3.8-flash-medium 时 thinkingBudget = 4000", () => {
+  try {
+    writeState({ last: { uid: "gemini-3.8-flash-medium", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "gemini-3.8-flash-medium");
+    assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
+  } finally { clearState(); }
+});
+
+test("动态档位: 旁路选 gemini-3.8-flash-low 时 thinkingBudget = 1000", () => {
+  try {
+    writeState({ last: { uid: "gemini-3.8-flash-low", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "gemini-3.8-flash-low");
+    assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 1000);
+  } finally { clearState(); }
+});
+
+test("动态档位: 旁路选 gemini-3.8-flash-high 时 thinkingBudget = -1", () => {
+  try {
+    writeState({ last: { uid: "gemini-3.8-flash-high", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "gemini-3.8-flash-high");
+    assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+  } finally { clearState(); }
+});
+
+test("动态档位: 旁路选 Claude 时 thinkingBudget 仍为 -1（表中无此项，保持既有行为）", () => {
+  try {
+    writeState({ last: { uid: "claude-opus-5-5-low", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(placeholderBody(), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "claude-opus-5-5-low");
+    assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+  } finally { clearState(); }
+});
+
+test("动态档位: 默认回退 gemini-3.8-flash-high 时 thinkingBudget = -1", () => {
+  clearState();
+  const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
+  assert.equal(out.model, DEFAULT_TARGET);
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+});
+
+test("动态档位: 无 thinkingConfig 时不抛错（不新增字段）", () => {
+  try {
+    writeState({ last: { uid: "gemini-3.8-flash-low", ts: Date.now() }, bySid: {} });
+    const input = buf({ model: SOURCE_MODEL, request: { generationConfig: { temperature: 0.7 } } });
+    const out = parse(compat.rewriteRequestBody(input, null));
+    assert.equal(out.model, "gemini-3.8-flash-low");
+    assert.equal(out.request.generationConfig.thinkingConfig, undefined);
+    assert.equal(out.request.generationConfig.temperature, 0.7);
+  } finally { clearState(); }
+});
+
 test("推理强度提升: 非主对话请求(lite/标题)不修改 thinkingBudget", () => {
   const input = buf({
     model: "gemini-3.1-flash-lite",

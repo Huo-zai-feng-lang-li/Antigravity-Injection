@@ -34,37 +34,55 @@ function extractModelFromUrl(reqUrl) {
 }
 
 /**
- * [EFFORT-HIGH] 提升主对话请求的推理强度到 High。
+ * [EFFORT-DYNAMIC] 按目标模型设置主对话请求的推理强度。
  *
  * 背景：Antigravity 私有端点 /v1internal 为旧版 schema，只认
  * request.generationConfig.thinkingConfig.thinkingBudget（token 数），
  * 不认 Gemini 3 新字段 thinkingLevel（加了会 400 INVALID_ARGUMENT）。
  * LS 给 Fast 版模型写入 thinkingBudget=1024（Low 档），导致模型自报
- * effort level 0.25。官方定义 thinkingBudget=-1 为动态思考（模型按任务
- * 复杂度自行决定，等同 High 满载），故此处将主对话请求的 1024 提升为 -1。
+ * effort level 0.25。
+ *
+ * 2026-10-23 变更（原 [EFFORT-HIGH] 无条件 -1 会抹平档位）：
+ *   改为按**目标 uid** 查表设置，官方元信息中的 thinkingBudget 为准：
+ *     gemini-3.8-flash-high    -> -1    （动态思考，等同 High 满载）
+ *     gemini-3.8-flash-medium  -> 4000
+ *     gemini-3.8-flash-low     -> 1000
+ *     gemini-3.8-flash-tiered  -> -1
+ *   表中没有的模型（Claude 全系、其它 Gemini、未知新模型）保持 -1，
+ *   与既有已验证行为一致，零回归。
  *
  * 仅对主对话请求（顶层 model 为 LS 占位符 gemini-2.5-pro）生效，
  * 不动 lite/标题摘要等附属请求。
- *
- * @param {object} request - 解析后的请求体
- * @returns {boolean} 是否发生了提升
  */
-function _agLiftThinking(request) {
+const THINKING_BUDGET_BY_MODEL = Object.freeze({
+  "gemini-3.8-flash-high": -1,
+  "gemini-3.8-flash-medium": 4000,
+  "gemini-3.8-flash-low": 1000,
+  "gemini-3.8-flash-tiered": -1,
+});
+
+/**
+ * 按目标模型 uid 设置 thinkingBudget。
+ * @param {object} request - 解析后的请求体
+ * @param {string} targetModel - 最终改写后的模型 uid
+ * @returns {boolean} 是否发生了修改
+ */
+function _agApplyThinkingBudget(request, targetModel) {
   try {
-    if (
+    const tc =
       request &&
-      request.model === SOURCE_MODEL &&
       request.request &&
       request.request.generationConfig &&
-      request.request.generationConfig.thinkingConfig &&
-      Object.prototype.hasOwnProperty.call(
-        request.request.generationConfig.thinkingConfig,
-        "thinkingBudget"
-      )
-    ) {
-      request.request.generationConfig.thinkingConfig.thinkingBudget = -1;
-      return true;
-    }
+      request.request.generationConfig.thinkingConfig;
+    if (!tc || !Object.prototype.hasOwnProperty.call(tc, "thinkingBudget")) return false;
+    const budget = Object.prototype.hasOwnProperty.call(
+      THINKING_BUDGET_BY_MODEL,
+      targetModel
+    )
+      ? THINKING_BUDGET_BY_MODEL[targetModel]
+      : -1;
+    tc.thinkingBudget = budget;
+    return true;
   } catch {}
   return false;
 }
@@ -124,18 +142,17 @@ function rewriteRequestBody(body, reqUrl) {
   if (!Buffer.isBuffer(body)) return body;
   try {
     const request = JSON.parse(body.toString("utf8"));
-    // [EFFORT-HIGH] 提升主对话思考等级到 High（thinkingBudget 1024 -> -1）
-    const lifted = _agLiftThinking(request);
-
     if (!request || request.model !== SOURCE_MODEL) {
-      // 非占位符请求：仅当提升动作改了内容时才重序列化
-      return lifted ? Buffer.from(JSON.stringify(request), "utf8") : body;
+      // 非占位符请求：不做任何改写（thinkingBudget 只对主对话占位符有意义）
+      return body;
     }
 
     // 目标模型解析：URL 显式模型名 > renderer 旁路选择（Claude 等）> 默认 3.8
     const targetModel =
       extractModelFromUrl(reqUrl) || _agReadSelected(request) || DEFAULT_TARGET_MODEL;
     request.model = targetModel;
+    // [EFFORT-DYNAMIC] 按最终目标模型设置 thinkingBudget（High -1 / Medium 4000 / Low 1000）
+    _agApplyThinkingBudget(request, targetModel);
     return Buffer.from(JSON.stringify(request), "utf8");
   } catch {
     return body;

@@ -2,6 +2,8 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+v9.9.531 · feat(compat): thinkingBudget 按模型 uid 动态设置，放出 Gemini 3.8 Medium/Low 两档
+
 v9.9.530 · unlock Claude 5.5 six tiers and Gemini 3.8 via model-selection bypass
 
 ## v9.9.529 · Gemini 3.8 Flash 推理强度提升至 High（thinkingBudget 1024 → -1）
