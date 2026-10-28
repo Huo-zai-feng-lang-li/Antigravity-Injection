@@ -112,6 +112,13 @@ npm test
 
 ---
 
-## 相关项目
+## 🔗 推荐🌟🌟🌟🌟🌟⭐反重力 IDE 生态配套工具
 
-- [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) — 模型兼容层（必须配合使用）
+| 配套工具 / 资源 | GitHub 链接 | 功能说明 |
+| :--- | :--- | :--- |
+| 🛡️ **Antigravity 旧版兼容管理器** | [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) | 为旧版 Antigravity IDE 提供 Claude、Gemini 3.6、Gemini 3.7 兼容放行、启动卡死防护、自动备份自愈以及专属子代理代码审查引擎 (Subagent MCP)。 |
+| 🏛 **Antigravity 历史版本库** | [Antigravity-ide-history](https://github.com/Huo-zai-feng-lang-li/Antigravity-ide-history) | 收集 Antigravity IDE 历史版本（如 `Antigravity-1.20.6.exe`），方便版本回退与特定环境测试。 |
+| ⚡ **Antigravity-Power-Pro** | [Antigravity-Power-Pro](https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro) | 支持自定义提示词增强、一键快速滚动、侧边栏自由调整大小等。 |
+| 🤖 **Auto-Agent-AntiGravity** | [Auto-Agent-AntiGravity](https://github.com/Huo-zai-feng-lang-li/Auto-Agent-AntiGravity) | Agent 自动点击工具：支持自动点击接受（Auto-Accept）、自动点击重试（Auto-Retry），实现全自动协同。 |
+| 🔌 **vscode-antigravity-cockpit** | [vscode-antigravity-cockpit](https://github.com/Huo-zai-feng-lang-li/vscode-antigravity-cockpit) | 插件版切号：配合桌面端实现无感换号与配额监控。 |
+| 🧰 **cockpit-tools** | [cockpit-tools](https://github.com/Huo-zai-feng-lang-li/cockpit-tools) | 桌面端切号工具：无感切号桌面端配套组件，支持多账号多实例并行。 |
