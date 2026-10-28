@@ -112,11 +112,21 @@ npm test
 
 ---
 
-## 🔗 推荐🌟🌟🌟🌟🌟⭐反重力 IDE 生态配套工具
+## 🔗 反重力 IDE 配套项目与推荐生态
 
-| 配套工具 / 资源 | GitHub 链接 | 功能说明 |
+### ⚡ 核心基建（互相引用 · 必须一块使用）
+
+> ⚠️ **核心强依赖说明**：本插件与 `antigravity-old-compat-manager` 处于强绑定的孪生架构关系，**二者互相引用，必须同时运行才能获得完整功能**。本插件只负责运行时注入，宿主环境兼容、防卡死与代码审查均依赖管理器。
+
+| 核心组件 | GitHub 仓库 | 定位 | 职责分工 |
+| :--- | :--- | :--- | :--- |
+| 💉 **Antigravity-Injection**<br>*(当前仓库)* | [Antigravity-Injection](https://github.com/Huo-zai-feng-lang-li/Antigravity-Injection) | 插件端 / 注入层 | 全局 System Prompt 注入、标题简体中文规范、动态模型改写映射、流式结束保险、High 思考强度提升。 |
+| 🛡️ **antigravity-old-compat-manager** | [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) | 宿主端 / 兼容层 & 审查引擎 | Bridge 修补部署、版本伪装 2.5.5、模型列表过滤防卡死、启动自愈、以及专属 API 驱动的子代理代码审查引擎 (Subagent MCP)。 |
+
+### 🌟 推荐周边生态工具（按需选用）
+
+| 周边工具 / 资源 | GitHub 链接 | 功能说明 |
 | :--- | :--- | :--- |
-| 🛡️ **Antigravity 旧版兼容管理器** | [antigravity-old-compat-manager](https://github.com/Huo-zai-feng-lang-li/antigravity-old-compat-manager) | 为旧版 Antigravity IDE 提供 Claude、Gemini 3.6、Gemini 3.7 兼容放行、启动卡死防护、自动备份自愈以及专属子代理代码审查引擎 (Subagent MCP)。 |
 | 🏛 **Antigravity 历史版本库** | [Antigravity-ide-history](https://github.com/Huo-zai-feng-lang-li/Antigravity-ide-history) | 收集 Antigravity IDE 历史版本（如 `Antigravity-1.20.6.exe`），方便版本回退与特定环境测试。 |
 | ⚡ **Antigravity-Power-Pro** | [Antigravity-Power-Pro](https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro) | 支持自定义提示词增强、一键快速滚动、侧边栏自由调整大小等。 |
 | 🤖 **Auto-Agent-AntiGravity** | [Auto-Agent-AntiGravity](https://github.com/Huo-zai-feng-lang-li/Auto-Agent-AntiGravity) | Agent 自动点击工具：支持自动点击接受（Auto-Accept）、自动点击重试（Auto-Retry），实现全自动协同。 |
