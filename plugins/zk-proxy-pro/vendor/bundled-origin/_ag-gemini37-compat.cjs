@@ -6,7 +6,9 @@ const path = require("path");
 // LS 内部占位符模型名（所有 Gemini 模型可能都用这个占位符）
 const SOURCE_MODEL = "gemini-2.5-pro";
 // 默认目标模型（当 URL 中提取不到实际模型名、且无旁路选择时的回退）
-const DEFAULT_TARGET_MODEL = "gemini-3.8-flash-high";
+// 2026-11-24：3.8 三档（high/medium/low）已从服务端下线（uid 全 404），仅 tiered 存活；
+// 改为当前唯一对 standard-tier 开放的 Gemini 4（Hydrogen 全档位可用）。
+const DEFAULT_TARGET_MODEL = "gemini-4-hydrogen-sonar";
 // renderer 模型选择旁路落盘文件相对目录（与 source.js 的 /__agtarget 路由一致）
 const SELECTED_STATE_FILE = path.join("_agcap", "_ag-selected.json");
 // 测试隔离：允许通过环境变量把落盘路径重定向到临时目录，
@@ -66,21 +68,52 @@ const THINKING_BUDGET_BY_MODEL = Object.freeze({
   "gemini-3.8-flash-medium": 4000,
   "gemini-3.8-flash-low": 1000,
   "gemini-3.8-flash-tiered": -1,
+  // 2026-11-24：Gemini 4 Hydrogen（唯一对 standard-tier 开放的 Gemini 4 档）
+  // 实测 TTFT：budget -1/16384 = 16~18s、8192 = 9.2s、4000 = 6.7s、1000 = 5.8s。
+  // Gemini 4 不返回明文 thought（只有 thoughtSignature），思考期客户端零输出，
+  // 故 budget 越大越像"卡住"。Fast 档取 4000 作为速度/深度的平衡点。
+  "gemini-4-hydrogen-sonar": 4000,
+  // 2026-11-24：Claude 4.6 两档（目录内实测 200；4.6 于 11-30 下线）
+  "claude-sonnet-4-6": -1,
+  "claude-opus-4-6-thinking": -1,
+});
+
+// 合成别名表：前端下拉用「假 uid」表达同一模型的不同推理档，此处解析回真实 uid。
+// 键必须与 workbench 补丁 MODELS 里的 uid 完全一致；未登记的 uid 原样透传。
+// budget 为数字时表示强制写入 request.generationConfig.thinkingConfig.thinkingBudget。
+const UID_ALIAS = Object.freeze({
+  // Fast 档：4000 实测 TTFT 6.7s（-1 要 18s，用户感知为"卡住"）
+  "gemini-4-hydrogen-sonar": { uid: "gemini-4-hydrogen-sonar", budget: 4000 },
+  // High Effort 档：16384 映射到 HIGH（3614 thought tokens），TTFT ~16s
+  "gemini-4-hydrogen-sonar-high": { uid: "gemini-4-hydrogen-sonar", budget: 16384 },
 });
 
 /**
  * 按目标模型 uid 设置 thinkingBudget。
  * @param {object} request - 解析后的请求体
- * @param {string} targetModel - 最终改写后的模型 uid
+ * @param {string} targetModel - 最终改写后的真实模型 uid
+ * @param {number} [forcedBudget] - 合成别名指定的固定预算；给出时强制创建 thinkingConfig 并写入
  * @returns {boolean} 是否发生了修改
  */
-function _agApplyThinkingBudget(request, targetModel) {
+function _agApplyThinkingBudget(request, targetModel, forcedBudget) {
   try {
-    const tc =
-      request &&
-      request.request &&
-      request.request.generationConfig &&
-      request.request.generationConfig.thinkingConfig;
+    const r = request && request.request;
+    if (!r || typeof r !== "object") return false;
+
+    // 合成别名（最强档）需要强制注入，即使 LS 没带 generationConfig / thinkingConfig
+    if (typeof forcedBudget === "number") {
+      if (!r.generationConfig || typeof r.generationConfig !== "object") r.generationConfig = {};
+      if (
+        !r.generationConfig.thinkingConfig ||
+        typeof r.generationConfig.thinkingConfig !== "object"
+      ) {
+        r.generationConfig.thinkingConfig = {};
+      }
+      r.generationConfig.thinkingConfig.thinkingBudget = forcedBudget;
+      return true;
+    }
+
+    const tc = r.generationConfig && r.generationConfig.thinkingConfig;
     if (!tc || !Object.prototype.hasOwnProperty.call(tc, "thinkingBudget")) return false;
     const budget = Object.prototype.hasOwnProperty.call(
       THINKING_BUDGET_BY_MODEL,
@@ -133,13 +166,41 @@ function _agReadSelected(request) {
 }
 
 /**
+ * 判断该请求是否为「主对话」请求（agent chat），用于在 LS 不再发送占位符时
+ * 仍能按旁路选择覆盖真实 uid。
+ *
+ * 背景（2026-11-24 实测）：旧 LS 现已直接发送 `gemini-3.8-flash-n` 一类具体 uid，
+ * 不再是占位符 `gemini-2.5-pro`；原「仅在占位符时改写」的条件会让所有合成项失效，
+ * 表现为「界面选 Claude 5.5 / Gemini 4，实际跑 3.8」。主对话与附属请求（标题/摘要/
+ * 行内补全）共用同一 URL，故以请求体特征区分：
+ *   - 主对话必然带 tools 定义，或带超长 systemInstruction（实测 25k+ 字符）
+ *   - 附属请求 systemInstruction 仅数百字符、无 tools
+ *
+ * @param {object} request - 解析后的请求体
+ * @returns {boolean} 是否为主对话请求
+ */
+function _agIsMainChat(request) {
+  try {
+    const r = request && request.request;
+    if (!r || typeof r !== "object") return false;
+    const toolCount = Array.isArray(r.tools) ? r.tools.length : 0;
+    const siLen =
+      r.systemInstruction && Array.isArray(r.systemInstruction.parts)
+        ? r.systemInstruction.parts.map((p) => (p && p.text) || "").join("").length
+        : 0;
+    return toolCount > 0 || siLen > 2000;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 动态改写请求体中的模型名，并按目标档位设置推理强度。
  *
- * 如果请求体里的 model 是 LS 占位符 (gemini-2.5-pro)，则按以下优先级
- * 解析真实目标模型并改写：
- *   URL 显式模型名 > renderer 旁路选择（Claude 等合成模型）> 默认 3.8。
- * 这样官方发布任何新模型（Gemini 3.9/4.0、新版 Claude 等），只要前端
- * 放行显示并把 uid 经旁路带上，代理即可正确路由，无需改这里的映射代码。
+ * 占位符请求（旧 LS）：URL 显式模型名 > 旁路选择 > 默认。
+ * 非占位符主对话（新 LS 直接发具体 uid）：仅在存在 URL 显式模型名或旁路选择时覆盖，
+ * 无目标则原样透传——避免默认值把官方正在使用的 uid 顶掉（3.8 下线后默认会 404）。
+ * 附属请求（标题/摘要/补全）永不改写。
  *
  * @param {Buffer} body - 请求体
  * @param {string} [reqUrl] - 请求 URL（用于提取实际模型名）
@@ -149,17 +210,27 @@ function rewriteRequestBody(body, reqUrl) {
   if (!Buffer.isBuffer(body)) return body;
   try {
     const request = JSON.parse(body.toString("utf8"));
-    if (!request || request.model !== SOURCE_MODEL) {
-      // 非占位符请求：不做任何改写（thinkingBudget 只对主对话占位符有意义）
-      return body;
-    }
+    if (!request || typeof request.model !== "string") return body;
 
-    // 目标模型解析：URL 显式模型名 > renderer 旁路选择（Claude 等）> 默认 3.8
-    const targetModel =
-      extractModelFromUrl(reqUrl) || _agReadSelected(request) || DEFAULT_TARGET_MODEL;
+    const isPlaceholder = request.model === SOURCE_MODEL;
+    const urlModel = extractModelFromUrl(reqUrl);
+    const selected = _agReadSelected(request);
+
+    // 附属请求（非占位符且非主对话）：一律不动
+    if (!isPlaceholder && !_agIsMainChat(request)) return body;
+    // 非占位符主对话且无任何改写目标：原样透传，保留官方当前可用 uid
+    if (!isPlaceholder && !urlModel && !selected) return body;
+
+    // 目标模型解析：URL 显式模型名 > renderer 旁路选择（合成项）> 默认
+    const rawTarget = urlModel || selected || DEFAULT_TARGET_MODEL;
+    // 合成别名解析：前端假 uid → 真实 uid（可带强制推理预算）
+    const alias = Object.prototype.hasOwnProperty.call(UID_ALIAS, rawTarget)
+      ? UID_ALIAS[rawTarget]
+      : null;
+    const targetModel = alias ? alias.uid : rawTarget;
     request.model = targetModel;
-    // [EFFORT-DYNAMIC] 按最终目标模型设置 thinkingBudget（High -1 / Medium 4000 / Low 1000）
-    _agApplyThinkingBudget(request, targetModel);
+    // [EFFORT-DYNAMIC] 按最终目标模型设置 thinkingBudget；别名带 budget 时强制注入
+    _agApplyThinkingBudget(request, targetModel, alias ? alias.budget : undefined);
     return Buffer.from(JSON.stringify(request), "utf8");
   } catch {
     return body;
@@ -171,8 +242,10 @@ module.exports = {
   DEFAULT_TARGET_MODEL,
   SELECTED_FRESH_MS,
   THINKING_BUDGET_BY_MODEL,
+  UID_ALIAS,
   extractModelFromUrl,
   _agReadSelected,
   _agApplyThinkingBudget,
+  _agIsMainChat,
   rewriteRequestBody,
 };

@@ -76,7 +76,7 @@ test("健壮性: 非 Buffer / 非法 JSON 原样返回", () => {
 });
 
 // v9.9.529 · 推理强度 High 提升 (_agLiftThinking)
-test("推理强度提升: 主对话请求 thinkingBudget 1024 -> -1(High/动态)", () => {
+test("推理强度: 主对话默认目标(Hydrogen Fast) 由 1024 提升到 4000", () => {
   const input = buf({
     model: SOURCE_MODEL,
     request: {
@@ -87,7 +87,7 @@ test("推理强度提升: 主对话请求 thinkingBudget 1024 -> -1(High/动态)
   });
   const out = parse(compat.rewriteRequestBody(input, "/v1internal:streamGenerateContent?alt=sse"));
   assert.equal(out.model, DEFAULT_TARGET);
-  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
 });
 
 // 2026-10-23 · 按目标 uid 动态设置 thinkingBudget（原无条件 -1 会抹平 Medium/Low 档位）
@@ -127,11 +127,11 @@ test("动态档位: 旁路选 Claude 时 thinkingBudget 仍为 -1（表中无此
   } finally { clearState(); }
 });
 
-test("动态档位: 默认回退 gemini-3.8-flash-high 时 thinkingBudget = -1", () => {
+test("默认目标: 回退 Hydrogen Fast 档时 thinkingBudget = 4000", () => {
   clearState();
   const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
   assert.equal(out.model, DEFAULT_TARGET);
-  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
 });
 
 test("动态档位: 无 thinkingConfig 时不抛错（不新增字段）", () => {
@@ -310,11 +310,92 @@ test("旁路: 未来时间戳(时钟异常/伪造)回退默认模型", () => {
   } finally { clearState(); }
 });
 
-test("旁路: ts 为非数字字符串时安全回退默认模型", () => {
+// 2026-11-24 · 新 LS 不再发占位符：主对话按旁路覆盖，附属请求不动
+function mainChatBody(model, extra = {}) {
+  return buf({
+    model,
+    request: {
+      tools: [{ functionDeclarations: [{ name: "read_file" }] }],
+      systemInstruction: { parts: [{ text: "x".repeat(3000) }] },
+      generationConfig: { thinkingConfig: { thinkingBudget: 1024 } },
+      ...extra,
+    },
+  });
+}
+
+test("主对话判定: tools 或超长 systemInstruction 视为主对话，附属请求不是", () => {
+  const withTools = { request: { tools: [{}] } };
+  const withLongSi = { request: { systemInstruction: { parts: [{ text: "x".repeat(2001) }] } } };
+  const accessory = {
+    request: {
+      systemInstruction: { parts: [{ text: "x".repeat(479) }] },
+      generationConfig: {},
+    },
+  };
+  assert.equal(compat._agIsMainChat(withTools), true);
+  assert.equal(compat._agIsMainChat(withLongSi), true);
+  assert.equal(compat._agIsMainChat(accessory), false);
+  assert.equal(compat._agIsMainChat({}), false);
+  assert.equal(compat._agIsMainChat(null), false);
+});
+
+test("非占位符主对话: 有新鲜旁路时覆盖为该 uid（新 LS 直发具体 uid 的核心修复）", () => {
   try {
-    writeState({ last: { uid: "claude-sonnet-5-5-high", ts: "not-a-number" }, bySid: {} });
-    const out = parse(compat.rewriteRequestBody(placeholderBody(), null));
-    assert.equal(out.model, DEFAULT_TARGET);
+    writeState({ last: { uid: "gemini-4-hydrogen-sonar", ts: Date.now() }, bySid: {} });
+    const out = parse(compat.rewriteRequestBody(mainChatBody("gemini-3.8-flash-n"), "/v1internal:streamGenerateContent?alt=sse"));
+    assert.equal(out.model, "gemini-4-hydrogen-sonar");
+    assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
   } finally { clearState(); }
 });
+
+test("非占位符主对话: 无旁路选择时原样透传（不撞默认值 404）", () => {
+  clearState();
+  const input = mainChatBody("gemini-3.8-flash-n");
+  const out = compat.rewriteRequestBody(input, "/v1internal:streamGenerateContent?alt=sse");
+  assert.equal(out, input);
+  assert.equal(parse(out).model, "gemini-3.8-flash-n");
+});
+
+test("非占位符附属请求: 即使有旁路选择也不改写（标题/摘要不被顶掉）", () => {
+  try {
+    writeState({ last: { uid: "gemini-4-hydrogen-sonar", ts: Date.now() }, bySid: {} });
+    const input = buf({
+      model: "gemini-3.1-flash-lite",
+      request: { systemInstruction: { parts: [{ text: "x".repeat(400) }] }, generationConfig: {} },
+    });
+    const out = compat.rewriteRequestBody(input, "/v1internal:streamGenerateContent?alt=sse");
+    assert.equal(out, input);
+  } finally { clearState(); }
+});
+
+// 2026-11-24 · 合成别名：下拉两个项共用同一个真实模型，仅推理强度不同
+test("别名: (High Effort) 假 uid 解析回真实 uid 并强制注入 thinkingBudget=16384", () => {
+  clearState();
+  const input = buf({
+    model: SOURCE_MODEL,
+    request: { contents: [{ role: "user", parts: [{ text: "hi" }] }] },
+  });
+  const out = parse(
+    compat.rewriteRequestBody(input, "/v1beta/models/gemini-4-hydrogen-sonar-high:generateContent"),
+  );
+  assert.equal(out.model, "gemini-4-hydrogen-sonar");
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 16384);
+});
+
+test("别名: (Fast) 项强制注入 thinkingBudget=4000（无 thinkingConfig 也补上）", () => {
+  clearState();
+  const input = buf({ model: SOURCE_MODEL, request: { contents: [] } });
+  const out = parse(
+    compat.rewriteRequestBody(input, "/v1beta/models/gemini-4-hydrogen-sonar:generateContent"),
+  );
+  assert.equal(out.model, "gemini-4-hydrogen-sonar");
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, 4000);
+});
+
+test("别名表: 两个下拉项都登记且指向同一真实 uid", () => {
+  assert.equal(compat.UID_ALIAS["gemini-4-hydrogen-sonar"].uid, "gemini-4-hydrogen-sonar");
+  assert.equal(compat.UID_ALIAS["gemini-4-hydrogen-sonar-high"].uid, "gemini-4-hydrogen-sonar");
+  assert.equal(compat.UID_ALIAS["gemini-4-hydrogen-sonar-high"].budget, 16384);
+});
+
 
