@@ -1,0 +1,9 @@
+# 打包排除表：vsce 只认这个文件，不读 .gitignore。
+# 2026-11-24：本地包曾把运行时日志（_router_diag.log 1.39MB + _ea_diag.log 84KB）
+# 一起打进 vsix（537KB），而 CI 因 .gitignore 的 *.log 规则只有 466KB —— 两边不一致。
+# 这里显式排除运行时产物，保证「本地构建 = CI 构建」。
+**/*.log
+**/_agcap/**
+**/_ea_diag*
+**/.DS_Store
+**/node_modules/**
