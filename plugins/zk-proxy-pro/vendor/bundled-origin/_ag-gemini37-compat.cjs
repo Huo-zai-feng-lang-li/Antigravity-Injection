@@ -76,6 +76,9 @@ const THINKING_BUDGET_BY_MODEL = Object.freeze({
   // 2026-11-24：Claude 4.6 两档（目录内实测 200；4.6 于 11-30 下线）
   "claude-sonnet-4-6": -1,
   "claude-opus-4-6-thinking": -1,
+  // 2026-11-24 第五轮：3 Flash 兜底档，-1 = 动态（不压思考深度），
+  // 它原生流式吐 thought，客户端首字节 1.35s 就有输出，不会出现空等。
+  "gemini-3-flash": -1,
 });
 
 // 合成别名表：前端下拉用「假 uid」表达同一模型的不同推理档，此处解析回真实 uid。
@@ -86,6 +89,9 @@ const UID_ALIAS = Object.freeze({
   "gemini-4-hydrogen-sonar": { uid: "gemini-4-hydrogen-sonar", budget: 4000 },
   // High Effort 档：16384 映射到 HIGH（3614 thought tokens），TTFT ~16s
   "gemini-4-hydrogen-sonar-high": { uid: "gemini-4-hydrogen-sonar", budget: 16384 },
+  // 2026-11-24 第五轮：3 Flash 兜底档。不设强制预算（-1 = 服务端自动），
+  // 保留它 1.35s TTFT + 明文 thought 的原生行为，作为"快且不落线"的日常档。
+  "gemini-3-flash": { uid: "gemini-3-flash", budget: -1 },
 });
 
 /**

@@ -6702,6 +6702,50 @@ function proxyToCloud(req, res, overrideBody, _rid) {
         _cancelUpstream(`res.writeHead fail: ${e.message}`);
         return;
       }
+      // ★ 2026-11-24 · thinking heartbeat（治「等待期零反馈 / 像卡死」）
+      let _agHbTimer = null;
+      try {
+        const _agIsSSE0 = /text\/event-stream/i.test(resHeaders["content-type"] || "");
+        let _agHbModel = null;
+        try {
+          if (bodyBuf && bodyBuf.length) {
+            _agHbModel = JSON.parse(bodyBuf.toString("utf8")).model;
+          }
+        } catch {}
+        const _agHbOn =
+          _agIsSSE0 &&
+          /streamGenerateContent/i.test(String(route.path || req.url || "")) &&
+          _agHbModel === "gemini-4-hydrogen-sonar";
+        if (_agHbOn) {
+          const _hbChunk =
+            'data: {"response": {"candidates": [{"content": {"role": "model", "parts": [{"text": ""}]}}]}}\n\n';
+          const _hbKill = () => {
+            if (_agHbTimer) {
+              clearInterval(_agHbTimer);
+              _agHbTimer = null;
+            }
+          };
+          try {
+            res.write(_hbChunk);
+          } catch {}
+          _agHbTimer = setInterval(() => {
+            if (res.writableEnded) return _hbKill();
+            try {
+              res.write(_hbChunk);
+            } catch {
+              _hbKill();
+            }
+          }, 2500);
+          upStream.on("data", _hbKill);
+          upStream.on("end", _hbKill);
+          upStream.on("close", _hbKill);
+          upStream.on("error", _hbKill);
+          res.on("close", _hbKill);
+          log(`#${_rid || "?"} [thinking-heartbeat] hydrogen stream pre-armed (2.5s)`);
+        }
+      } catch (e) {
+        log(`[thinking-heartbeat] setup skipped: ${e.message}`);
+      }
       upStream.pipe(res);
       // ★ v9.9.523 · 流式响应结束信号保险 · 防 Generating 卡死
       //   根因: 官方 H2 stream 偶发不触发 end → pipe 不调 res.end() → IDE 一直 Generating

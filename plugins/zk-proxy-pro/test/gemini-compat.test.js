@@ -398,4 +398,19 @@ test("别名表: 两个下拉项都登记且指向同一真实 uid", () => {
   assert.equal(compat.UID_ALIAS["gemini-4-hydrogen-sonar-high"].budget, 16384);
 });
 
+test("别名: (3 Flash) 兜底档不改 uid、强制 -1（服务端自动，不压思考）", () => {
+  clearState();
+  const input = buf({ model: SOURCE_MODEL, request: { contents: [] } });
+  const out = parse(compat.rewriteRequestBody(input, "/v1beta/models/gemini-3-flash:generateContent"));
+  assert.equal(out.model, "gemini-3-flash");
+  assert.equal(out.request.generationConfig.thinkingConfig.thinkingBudget, -1);
+});
+
+test("别名表: 3 Flash 兜底档登记且预算为 -1", () => {
+  assert.equal(compat.UID_ALIAS["gemini-3-flash"].uid, "gemini-3-flash");
+  assert.equal(compat.UID_ALIAS["gemini-3-flash"].budget, -1);
+  assert.equal(compat.THINKING_BUDGET_BY_MODEL["gemini-3-flash"], -1);
+});
+
+
 
