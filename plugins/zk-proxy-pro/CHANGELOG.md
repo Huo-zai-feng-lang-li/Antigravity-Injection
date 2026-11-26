@@ -2,6 +2,8 @@
 
 > 完整版本历史。详情页（README）保持精简，本文件单列于扩展的 Changelog 标签页。
 
+v9.9.536 · fix(catalog): fetchAvailableModels 补回 gemini-2.5-pro 外壳，修复旧 LS 占位符校验失败导致模型不回复
+
 v9.9.532 · refactor(compat): 测试隔离 AG_SELECTED_FILE + 导出查表函数 + 补齐档位单测
 
 v9.9.531 · feat(compat): thinkingBudget 按模型 uid 动态设置，放出 Gemini 3.8 Medium/Low 两档
@@ -113,3 +115,4 @@ HEAD `b48a27e`。keepAlive true。后续 v9.9.507~516 为实验性迭代，最�
 ---
 
 **教训**：v9.9.510~516 面板重构连续破坏 extension.js 结构（activate/deactivate 被删、EaRouterProvider 重复声明）。根因是功能重叠——插件做了 old-compat-manager 的事，导致双重注入冲突。最终方案：插件只做注入层，兼容层全交 old-compat-manager。
+

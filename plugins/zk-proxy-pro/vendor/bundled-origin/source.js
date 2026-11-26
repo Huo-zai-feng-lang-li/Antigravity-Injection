@@ -147,6 +147,10 @@ const path = require("path");
 const os = require("os");
 const zlib = require("zlib");
 
+// ★ v9.9.536 · 旧 LS 占位符外壳修复 · fetchAvailableModels 补回 gemini-2.5-pro
+//   根因见 _ag-catalog-repair.cjs 头注释 (官方 2026-11-26 目录删 2.5 Pro → LS 校验占位符直接失败)
+const _agCatalogRepair = require(path.join(__dirname, "_ag-catalog-repair.cjs"));
+
 // ★ v9.9.91 · 修法① · 执一 · 引用 sp_invert.js 为唯一 SP 引擎 · 消除双引擎
 //   ZK义: 二十八章「圣人执一以为天下牧」· 大制无割 · 一引擎统两路
 const _spInvertLib = (() => {
@@ -6695,6 +6699,61 @@ function proxyToCloud(req, res, overrideBody, _rid) {
           return; // 已接管 · 不再 pipe
         }
       }
+      // ★ v9.9.536 · 旧壳复活 · fetchAvailableModels(gzip JSON)
+      //   官方目录删掉 gemini-2.5-pro 后, 旧 LS 主对话占位符在校验阶段即被拒
+      //   (unknown model key MODEL_GOOGLE_GEMINI_2_5_PRO) → 用户发什么都收不到回复。
+      //   治: 只在这条响应里补回外壳模型(不写 agentModelSorts, 下拉不受影响), 失败原样透传。
+      {
+        const _rpcPathU = route.path || req.url || "";
+        const _ctU = (h2resHeaders && h2resHeaders["content-type"]) || "";
+        const _ceU = (h2resHeaders && h2resHeaders["content-encoding"]) || "";
+        if (
+          status === 200 &&
+          /fetchAvailableModels/i.test(_rpcPathU) &&
+          /json/i.test(_ctU)
+        ) {
+          const _cb = [];
+          let _cn = 0;
+          const _cbMax = 8 * 1024 * 1024;
+          upStream.on("data", (c) => {
+            if (_cn < _cbMax) {
+              _cb.push(c);
+              _cn += c.length;
+            }
+          });
+          upStream.on("end", () => {
+            const _orig = Buffer.concat(_cb);
+            const _fixed = _agCatalogRepair.repairAvailableModelsBody(
+              _orig,
+              _ceU,
+            );
+            const _outBuf = _fixed ? _fixed.buf : _orig;
+            const _h = { ...resHeaders };
+            delete _h["content-length"];
+            _h["content-length"] = String(_outBuf.length);
+            if (_fixed && _fixed.gzip) _h["content-encoding"] = "gzip";
+            else delete _h["content-encoding"];
+            try {
+              res.writeHead(status, _h);
+              res.end(_outBuf);
+            } catch (e) {
+              log(`#${_rid} [目录修复] 写回失败 → 502: ${e.message}`);
+              try {
+                if (!res.headersSent) {
+                  res.writeHead(502);
+                  res.end();
+                }
+              } catch {}
+            }
+            if (_fixed) {
+              log(
+                `#${_rid} [目录修复] fetchAvailableModels 补回外壳模型 ${_fixed.added} 项 · ${_orig.length}→${_outBuf.length}B`,
+              );
+            }
+          });
+          return; // 已接管 · 不再 pipe
+        }
+      }
       try {
         res.writeHead(status, resHeaders);
       } catch (e) {
@@ -7845,5 +7904,7 @@ module.exports = {
     _pbEncVarint,
     _PRO_BADGE,
     _loadFullModelCatalog,
+    _repairAvailableModelsBody: _agCatalogRepair.repairAvailableModelsBody,
+    _ensureLegacyShellModels: _agCatalogRepair.ensureLegacyShellModels,
   },
 };
